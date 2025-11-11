@@ -1,0 +1,74 @@
+{
+  "common": {
+    "appName": "Free AI Translator",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "close": "Close",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "next": "Next"
+  },
+  "home": {
+    "title": "Free AI Translation",
+    "subtitle": "Use AI from multiple providers",
+    "upload": "Upload File",
+    "or": "or",
+    "pasteText": "Paste Text",
+    "supportedFormats": "Supported formats: EPUB, PDF, TXT, DOCX",
+    "maxSize": "Max size: 50MB"
+  },
+  "translation": {
+    "selectSource": "Select source language",
+    "selectTarget": "Select target language",
+    "selectProvider": "Select AI provider",
+    "selectModel": "Select model",
+    "autoDetect": "Auto-detect",
+    "translating": "Translating... {progress}%",
+    "completed": "Completed!",
+    "download": "Download",
+    "copyToClipboard": "Copy to clipboard",
+    "chunks": "{current} of {total} chunks"
+  },
+  "providers": {
+    "openrouter": "OpenRouter",
+    "gemini": "Google Gemini",
+    "mistral": "Mistral AI",
+    "groq": "Groq"
+  },
+  "errors": {
+    "fileTooBig": "File too large (max 50MB)",
+    "unsupportedFormat": "Unsupported format",
+    "uploadFailed": "Upload failed",
+    "translationFailed": "Translation failed",
+    "quotaExceeded": "Quota exceeded, switching to another API...",
+    "allQuotasExceeded": "All APIs exhausted. Please try again later.",
+    "networkError": "Network error. Please check your connection.",
+    "invalidFile": "Invalid file"
+  },
+  "settings": {
+    "title": "Settings",
+    "theme": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System",
+    "language": "Language",
+    "defaultProvider": "Default Provider",
+    "defaultModel": "Default Model",
+    "apiQuota": "API Quota Usage",
+    "clearCache": "Clear Cache",
+    "cacheCleared": "Cache cleared successfully"
+  },
+  "extension": {
+    "hover": "Hover to translate",
+    "translateAll": "Translate All",
+    "translating": "Translating...",
+    "translated": "Translated",
+    "showOriginal": "Show Original",
+    "copyTranslation": "Copy Translation"
+  }
+}

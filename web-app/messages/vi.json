@@ -1,0 +1,74 @@
+{
+  "common": {
+    "appName": "Dịch AI Miễn Phí",
+    "loading": "Đang tải...",
+    "error": "Lỗi",
+    "success": "Thành công",
+    "cancel": "Hủy",
+    "confirm": "Xác nhận",
+    "close": "Đóng",
+    "save": "Lưu",
+    "delete": "Xóa",
+    "edit": "Sửa",
+    "back": "Quay lại",
+    "next": "Tiếp theo"
+  },
+  "home": {
+    "title": "Dịch Thuật AI Miễn Phí",
+    "subtitle": "Sử dụng AI từ nhiều nhà cung cấp",
+    "upload": "Tải file lên",
+    "or": "hoặc",
+    "pasteText": "Dán văn bản",
+    "supportedFormats": "Định dạng hỗ trợ: EPUB, PDF, TXT, DOCX",
+    "maxSize": "Kích thước tối đa: 50MB"
+  },
+  "translation": {
+    "selectSource": "Chọn ngôn ngữ nguồn",
+    "selectTarget": "Chọn ngôn ngữ đích",
+    "selectProvider": "Chọn nhà cung cấp AI",
+    "selectModel": "Chọn mô hình",
+    "autoDetect": "Tự động nhận diện",
+    "translating": "Đang dịch... {progress}%",
+    "completed": "Hoàn tất!",
+    "download": "Tải xuống",
+    "copyToClipboard": "Sao chép",
+    "chunks": "{current} / {total} đoạn"
+  },
+  "providers": {
+    "openrouter": "OpenRouter",
+    "gemini": "Google Gemini",
+    "mistral": "Mistral AI",
+    "groq": "Groq"
+  },
+  "errors": {
+    "fileTooBig": "File quá lớn (tối đa 50MB)",
+    "unsupportedFormat": "Định dạng không hỗ trợ",
+    "uploadFailed": "Tải lên thất bại",
+    "translationFailed": "Dịch thất bại",
+    "quotaExceeded": "Đã hết quota, đang chuyển sang API khác...",
+    "allQuotasExceeded": "Tất cả API đều hết quota. Vui lòng thử lại sau.",
+    "networkError": "Lỗi mạng. Vui lòng kiểm tra kết nối.",
+    "invalidFile": "File không hợp lệ"
+  },
+  "settings": {
+    "title": "Cài đặt",
+    "theme": "Giao diện",
+    "light": "Sáng",
+    "dark": "Tối",
+    "system": "Hệ thống",
+    "language": "Ngôn ngữ",
+    "defaultProvider": "Nhà cung cấp mặc định",
+    "defaultModel": "Mô hình mặc định",
+    "apiQuota": "Sử dụng API Quota",
+    "clearCache": "Xóa bộ nhớ đệm",
+    "cacheCleared": "Đã xóa bộ nhớ đệm thành công"
+  },
+  "extension": {
+    "hover": "Di chuột để dịch",
+    "translateAll": "Dịch tất cả",
+    "translating": "Đang dịch...",
+    "translated": "Đã dịch",
+    "showOriginal": "Hiển thị bản gốc",
+    "copyTranslation": "Sao chép bản dịch"
+  }
+}
