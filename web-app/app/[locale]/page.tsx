@@ -20,6 +20,12 @@ export default function HomePage() {
             </h1>
 
             <div className="flex items-center gap-4">
+              <Link
+                href="/settings"
+                className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              >
+                ⚙️ Settings
+              </Link>
               <LanguageSwitcher />
               <ThemeToggle />
             </div>

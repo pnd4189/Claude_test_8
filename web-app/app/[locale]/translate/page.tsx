@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { toast } from 'sonner';
+import Link from 'next/link';
 import { FileUpload } from '@/components/file-upload';
 import { TranslationProgress } from '@/components/translation-progress';
 import { parseFile, detectFormatFromFilename, type FileFormat } from '@/lib/file-parsers';
@@ -81,13 +83,23 @@ export default function TranslatePage() {
       setTranslatedText(result.translatedText);
 
       if (result.failureCount > 0) {
-        setError(
-          `${result.failureCount} chunks failed to translate. Some content may be missing.`
-        );
+        const errorMsg = `${result.failureCount} chunks failed to translate. Some content may be missing.`;
+        setError(errorMsg);
+        toast.warning('Translation completed with errors', {
+          description: errorMsg,
+        });
+      } else {
+        toast.success('Translation completed!', {
+          description: `Successfully translated ${result.totalChunks} chunks`,
+        });
       }
     } catch (err) {
       console.error('Translation error:', err);
-      setError(err instanceof Error ? err.message : 'Translation failed');
+      const errorMsg = err instanceof Error ? err.message : 'Translation failed';
+      setError(errorMsg);
+      toast.error('Translation failed', {
+        description: errorMsg,
+      });
     } finally {
       setIsTranslating(false);
     }
@@ -112,6 +124,20 @@ export default function TranslatePage() {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
         <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <Link
+              href="/"
+              className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              ← Back to Home
+            </Link>
+            <Link
+              href="/settings"
+              className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+            >
+              ⚙️ Settings
+            </Link>
+          </div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
             {t('home.title')}
           </h1>
