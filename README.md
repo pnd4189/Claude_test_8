@@ -72,48 +72,80 @@ chrome-extension/ (Coming Soon)
 ## Setup
 
 ### Prerequisites
-- Node.js 18+
-- npm or yarn
-- API keys for OpenRouter (and optionally Gemini, Mistral, Groq)
-- Upstash Redis account (free tier)
+- Node.js 18+ and npm
+- API keys for OpenRouter (minimum 1, recommended 10-12 for rotation)
+- Upstash Redis account (free tier at [upstash.com](https://upstash.com))
+- Optional: Gemini, Mistral, Groq API keys
 
-### Installation
+### Quick Start
 
-1. Clone the repository:
+1. **Clone the repository:**
 ```bash
 git clone <repo-url>
 cd Claude_test_8
 ```
 
-2. Install dependencies:
+2. **Setup Web Application:**
 ```bash
 cd web-app
 npm install
+cp .env.local .env.local.real
 ```
 
-3. Create `.env.local`:
-```bash
-cp .env.local.example .env.local
-```
+3. **Get API Keys:**
 
-4. Add your API keys to `.env.local`:
+   **OpenRouter** (Primary - Required):
+   - Visit [openrouter.ai](https://openrouter.ai)
+   - Sign up and get API key
+   - Add to `.env.local.real` as `OPENROUTER_API_KEY_1`
+   - Recommended: Create 10-12 keys for automatic rotation
+
+   **Upstash Redis** (Required for caching):
+   - Visit [upstash.com](https://upstash.com)
+   - Create free Redis database
+   - Copy REST URL and Token to `.env.local.real`
+
+   **Optional Providers** (for fallback):
+   - Gemini: [makersuite.google.com](https://makersuite.google.com)
+   - Mistral: [console.mistral.ai](https://console.mistral.ai)
+   - Groq: [console.groq.com](https://console.groq.com)
+
+4. **Configure Environment:**
+   Edit `web-app/.env.local.real`:
 ```env
-# OpenRouter Keys (minimum 1, recommended 10-12)
-OPENROUTER_API_KEY_1=sk-or-v1-xxx
-OPENROUTER_API_KEY_2=sk-or-v1-xxx
-...
-
-# Upstash Redis
-UPSTASH_REDIS_REST_URL=https://xxx.upstash.io
-UPSTASH_REDIS_REST_TOKEN=xxx
+OPENROUTER_API_KEY_1=sk-or-v1-your-key-here
+UPSTASH_REDIS_REST_URL=https://your-db.upstash.io
+UPSTASH_REDIS_REST_TOKEN=your-token-here
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-5. Run development server:
+5. **Run Development Server:**
 ```bash
 npm run dev
 ```
 
-6. Open [http://localhost:3000](http://localhost:3000)
+6. **Open Browser:**
+   Navigate to [http://localhost:3000](http://localhost:3000)
+
+### Chrome Extension Setup
+
+1. **Build Extension:**
+```bash
+cd chrome-extension
+npm install
+npm run build
+```
+
+2. **Load in Chrome:**
+   - Open Chrome → `chrome://extensions/`
+   - Enable "Developer mode"
+   - Click "Load unpacked"
+   - Select `chrome-extension/dist` folder
+
+3. **Test Extension:**
+   - Visit any website
+   - Select text → see translation tooltip
+   - Click extension icon → quick translate popup
 
 ## Usage
 
@@ -159,12 +191,33 @@ The platform includes:
 
 ## Development Roadmap
 
-- [x] Phase 1: Setup infrastructure
-- [x] Phase 2: Foundational components
-- [x] Phase 3: File translation feature
-- [ ] Phase 4: Chrome Extension
-- [ ] Phase 5: AI provider management UI
-- [ ] Phase 6: Polish and deployment
+- [x] Phase 1: Setup infrastructure ✅
+- [x] Phase 2: Foundational components ✅
+- [x] Phase 3: File translation feature ✅
+- [x] Phase 4: Chrome Extension ✅
+- [ ] Phase 5: AI provider management UI (Advanced settings page)
+- [ ] Phase 6: Polish and deployment (Production-ready)
+
+**Current Status**: 4/6 Phases Complete (67%)
+
+### Completed Features
+- ✅ Next.js 14 web application with i18n
+- ✅ File translation (EPUB, PDF, DOCX, TXT)
+- ✅ Smart text chunking for large documents
+- ✅ API key rotation system
+- ✅ Redis caching with 7-day TTL
+- ✅ Chrome Extension with text selection translation
+- ✅ Extension popup for quick translate
+- ✅ Dark/light theme support
+- ✅ Responsive design
+
+### In Progress / Future
+- 🚧 Settings page for provider selection
+- 🚧 Quota usage visualization
+- 🚧 Extension batch translation mode
+- 🚧 Additional AI providers (Gemini, Mistral, Groq)
+- 🚧 Production deployment guide
+- 🚧 User documentation
 
 ## Contributing
 
