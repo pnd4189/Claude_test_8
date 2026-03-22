@@ -1,0 +1,16 @@
+{
+  "name": "ai-translation-proxy",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "compile": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0",
+    "typescript": "^5.9.3",
+    "@cloudflare/workers-types": "^4.20250310.0"
+  }
+}

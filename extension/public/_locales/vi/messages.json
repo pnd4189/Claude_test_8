@@ -1,0 +1,42 @@
+{
+  "extensionName": {
+    "message": "AI Dịch Thuật",
+    "description": "Tên hiển thị extension"
+  },
+  "extensionDescription": {
+    "message": "Dịch song ngữ bằng AI cho trang web, video, ePub & PDF",
+    "description": "Mô tả extension"
+  },
+  "settingsTitle": {
+    "message": "Cài đặt",
+    "description": "Tiêu đề trang cài đặt"
+  },
+  "languageSource": {
+    "message": "Ngôn ngữ nguồn",
+    "description": "Nhãn chọn ngôn ngữ nguồn"
+  },
+  "languageTarget": {
+    "message": "Ngôn ngữ đích",
+    "description": "Nhãn chọn ngôn ngữ đích"
+  },
+  "autoDetect": {
+    "message": "Tự động nhận diện",
+    "description": "Tùy chọn tự động nhận diện ngôn ngữ"
+  },
+  "providerLabel": {
+    "message": "Nhà cung cấp AI",
+    "description": "Nhãn chọn nhà cung cấp"
+  },
+  "displayMode": {
+    "message": "Chế độ hiển thị",
+    "description": "Nhãn chế độ hiển thị bản dịch"
+  },
+  "translateSelection": {
+    "message": "Dịch đoạn chọn",
+    "description": "Mục menu chuột phải"
+  },
+  "openReader": {
+    "message": "Mở trình đọc",
+    "description": "Nút mở trình đọc PDF/ePub"
+  }
+}

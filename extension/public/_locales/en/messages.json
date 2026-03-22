@@ -1,0 +1,42 @@
+{
+  "extensionName": {
+    "message": "AI Translation",
+    "description": "Extension display name"
+  },
+  "extensionDescription": {
+    "message": "AI-powered bilingual translation for webpages, videos, ePub & PDF",
+    "description": "Extension description"
+  },
+  "settingsTitle": {
+    "message": "Settings",
+    "description": "Settings page title"
+  },
+  "languageSource": {
+    "message": "Source Language",
+    "description": "Source language selector label"
+  },
+  "languageTarget": {
+    "message": "Target Language",
+    "description": "Target language selector label"
+  },
+  "autoDetect": {
+    "message": "Auto Detect",
+    "description": "Auto-detect language option"
+  },
+  "providerLabel": {
+    "message": "AI Provider",
+    "description": "Provider selector label"
+  },
+  "displayMode": {
+    "message": "Display Mode",
+    "description": "Translation display mode label"
+  },
+  "translateSelection": {
+    "message": "Translate Selection",
+    "description": "Context menu item text"
+  },
+  "openReader": {
+    "message": "Open Reader",
+    "description": "Button to open PDF/ePub reader"
+  }
+}

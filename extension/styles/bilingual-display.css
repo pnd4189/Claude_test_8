@@ -1,0 +1,91 @@
+/* Bilingual translation display styles — injected by content script */
+
+.ait-translated {
+  font-family: system-ui, -apple-system, sans-serif;
+  line-height: 1.6;
+  color: #4a5568;
+  transition: opacity 0.2s ease;
+}
+
+/* Below mode */
+.ait-below {
+  display: block;
+  margin-top: 4px;
+  padding: 4px 8px;
+  border-left: 3px solid #6366f1;
+  background: rgba(99, 102, 241, 0.05);
+  font-size: 0.95em;
+  border-radius: 0 4px 4px 0;
+}
+
+/* Hover tooltip mode */
+.ait-hover {
+  position: absolute;
+  z-index: 10000;
+  max-width: 400px;
+  padding: 8px 12px;
+  background: #1a1a2e;
+  color: #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.9em;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+}
+
+/* Side-by-side wrapper */
+.ait-wrapper {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.ait-wrapper > [data-ait-id] {
+  flex: 1;
+  min-width: 0;
+}
+
+.ait-side {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 8px;
+  border-left: 3px solid #6366f1;
+  background: rgba(99, 102, 241, 0.05);
+  font-size: 0.95em;
+  border-radius: 0 4px 4px 0;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .ait-translated {
+    color: #cbd5e0;
+  }
+
+  .ait-below,
+  .ait-side {
+    background: rgba(99, 102, 241, 0.1);
+    border-left-color: #818cf8;
+  }
+
+  .ait-hover {
+    background: #2d3748;
+    color: #f7fafc;
+  }
+}
+
+/* Translation state indicators */
+[data-ait-state="translating"]::after {
+  content: '';
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-left: 6px;
+  border: 2px solid #6366f1;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: ait-spin 0.8s linear infinite;
+  vertical-align: middle;
+}
+
+@keyframes ait-spin {
+  to { transform: rotate(360deg); }
+}
