@@ -5,7 +5,7 @@
 
 ## Overview
 - **Priority:** P1
-- **Status:** pending
+- **Status:** complete
 - **Effort:** 2-3 days
 - **Blocked by:** Phase 1, Phase 2, Phase 3 (content script patterns)
 
@@ -111,19 +111,19 @@ Content Script (video-subtitle-hook.ts)
 
 ## Todo List
 
-- [ ] Implement platform detector
-- [ ] Implement YouTube subtitle extractor
-- [ ] Implement HTML5 track extractor (Coursera/Udemy/generic)
-- [ ] Implement VTT/SRT parser
-- [ ] Implement batch subtitle translator
-- [ ] Implement dual subtitle renderer with video sync
-- [ ] Create subtitle overlay CSS
-- [ ] Add subtitle toggle to popup
-- [ ] Test on YouTube (auto-generated + manual captions)
-- [ ] Test on Coursera
-- [ ] Test on Udemy
-- [ ] Test with generic HTML5 video + track elements
-- [ ] Handle edge cases: no captions, live streams, embedded iframes
+- [x] Implement platform detector
+- [x] Implement YouTube subtitle extractor
+- [x] Implement HTML5 track extractor (Coursera/Udemy/generic)
+- [x] Implement VTT/SRT parser
+- [x] Implement batch subtitle translator
+- [x] Implement dual subtitle renderer with video sync
+- [x] Create subtitle overlay CSS
+- [x] Add subtitle toggle to popup
+- [x] Test on YouTube (auto-generated + manual captions)
+- [x] Test on Coursera
+- [x] Test on Udemy
+- [x] Test with generic HTML5 video + track elements
+- [x] Handle edge cases: no captions, live streams, embedded iframes
 
 ## Success Criteria
 - YouTube bilingual subtitles work with < 2s initial delay

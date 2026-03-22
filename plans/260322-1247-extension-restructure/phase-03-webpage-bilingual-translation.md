@@ -6,7 +6,7 @@
 
 ## Overview
 - **Priority:** P0 (highest priority feature)
-- **Status:** pending
+- **Status:** complete
 - **Effort:** 2-3 days
 - **Blocked by:** Phase 1, Phase 2
 
@@ -137,21 +137,21 @@ Background Service Worker
 
 ## Todo List
 
-- [ ] Implement content detector
-- [ ] Implement paragraph collector
-- [ ] Implement translation queue with debounce + batching
-- [ ] Implement bilingual renderer (below mode first)
-- [ ] Add hover tooltip mode
-- [ ] Add side-by-side mode
-- [ ] Implement MutationObserver watcher
-- [ ] Implement IntersectionObserver lazy loading
-- [ ] Implement language detector
-- [ ] Update background service worker with translate handlers
-- [ ] Add translation toggle to popup
-- [ ] Add display mode selector to popup
-- [ ] Create bilingual CSS styles
-- [ ] Test on: Google Search, Wikipedia, Reddit, Twitter/X, Medium
-- [ ] Handle edge cases: iframes, shadow DOM, dynamically loaded content
+- [x] Implement content detector
+- [x] Implement paragraph collector
+- [x] Implement translation queue with debounce + batching
+- [x] Implement bilingual renderer (below mode first)
+- [x] Add hover tooltip mode
+- [x] Add side-by-side mode
+- [x] Implement MutationObserver watcher
+- [x] Implement IntersectionObserver lazy loading
+- [x] Implement language detector
+- [x] Update background service worker with translate handlers
+- [x] Add translation toggle to popup
+- [x] Add display mode selector to popup
+- [x] Create bilingual CSS styles
+- [x] Test on: Google Search, Wikipedia, Reddit, Twitter/X, Medium
+- [x] Handle edge cases: iframes, shadow DOM, dynamically loaded content
 
 ## Success Criteria
 - Bilingual translation displays correctly on top 10 popular sites

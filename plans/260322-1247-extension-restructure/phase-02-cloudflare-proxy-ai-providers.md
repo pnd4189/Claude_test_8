@@ -5,7 +5,7 @@
 
 ## Overview
 - **Priority:** Critical
-- **Status:** pending
+- **Status:** complete
 - **Effort:** 1-2 days
 - **Blocked by:** Nothing (parallel with Phase 1)
 
@@ -146,20 +146,20 @@ proxy-client.ts ──POST──→  /api/translate      ──→  Gemini API
 
 ## Todo List
 
-- [ ] Initialize Cloudflare Worker project
-- [ ] Configure wrangler.toml with KV namespace
-- [ ] Implement Worker routing + CORS
-- [ ] Implement Gemini provider (server side)
-- [ ] Implement GLM provider (server side)
-- [ ] Implement KV cache layer
-- [ ] Implement rate limiter
-- [ ] Define TranslationProvider interface
-- [ ] Implement proxy client (extension side)
-- [ ] Implement direct Gemini provider (extension side)
-- [ ] Implement direct GLM provider (extension side)
-- [ ] Implement provider registry with fallback
-- [ ] Test proxy locally with `wrangler dev`
-- [ ] Deploy proxy to Cloudflare
+- [x] Initialize Cloudflare Worker project
+- [x] Configure wrangler.toml with KV namespace
+- [x] Implement Worker routing + CORS
+- [x] Implement Gemini provider (server side)
+- [x] Implement GLM provider (server side)
+- [x] Implement KV cache layer
+- [x] Implement rate limiter
+- [x] Define TranslationProvider interface
+- [x] Implement proxy client (extension side)
+- [x] Implement direct Gemini provider (extension side)
+- [x] Implement direct GLM provider (extension side)
+- [x] Implement provider registry with fallback
+- [x] Test proxy locally with `wrangler dev`
+- [x] Deploy proxy to Cloudflare
 
 ## Success Criteria
 - Proxy translates text via Gemini and GLM

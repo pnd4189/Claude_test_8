@@ -5,7 +5,7 @@
 
 ## Overview
 - **Priority:** P2
-- **Status:** pending
+- **Status:** complete
 - **Effort:** 2-3 days
 - **Blocked by:** Phase 1, Phase 2
 
@@ -133,19 +133,19 @@ lib/
 
 ## Todo List
 
-- [ ] Install JSZip dependency
-- [ ] Implement ePub parser (metadata + chapters + TOC)
-- [ ] Implement chapter text extraction
-- [ ] Implement ePub translator with caching
-- [ ] Create ePub reader UI in Side Panel
-- [ ] Create chapter view with bilingual display
-- [ ] Create TOC sidebar with navigation
-- [ ] Implement reading progress persistence
-- [ ] Add file upload to popup
-- [ ] Add "Open in new tab" functionality
-- [ ] Implement display mode switching (stacked/side-by-side/translation-only)
-- [ ] Test with various ePub files (different structures)
-- [ ] Handle edge cases: no TOC, images-only chapters, large books
+- [x] Install JSZip dependency
+- [x] Implement ePub parser (metadata + chapters + TOC)
+- [x] Implement chapter text extraction
+- [x] Implement ePub translator with caching
+- [x] Create ePub reader UI in Side Panel
+- [x] Create chapter view with bilingual display
+- [x] Create TOC sidebar with navigation
+- [x] Implement reading progress persistence
+- [x] Add file upload to popup
+- [x] Add "Open in new tab" functionality
+- [x] Implement display mode switching (stacked/side-by-side/translation-only)
+- [x] Test with various ePub files (different structures)
+- [x] Handle edge cases: no TOC, images-only chapters, large books
 
 ## Success Criteria
 - ePub files parse correctly (metadata + chapters extracted)

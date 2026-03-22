@@ -5,7 +5,7 @@
 
 ## Overview
 - **Priority:** P3
-- **Status:** pending
+- **Status:** complete
 - **Effort:** 2-3 days
 - **Blocked by:** Phase 1, Phase 2, Phase 5 (shared reader infrastructure)
 
@@ -117,18 +117,18 @@ lib/
 
 ## Todo List
 
-- [ ] Install pdfjs-dist dependency
-- [ ] Implement PDF.js lazy loading
-- [ ] Implement PDF parser with text extraction
-- [ ] Implement text block grouping (paragraphs from positions)
-- [ ] Implement PDF translator with per-page caching
-- [ ] Create PDF reader UI in Side Panel
-- [ ] Create page view with canvas + text layer + translation overlay
-- [ ] Implement page navigation and zoom
-- [ ] Add PDF to file upload component
-- [ ] Implement translation progress tracking
-- [ ] Test with various PDFs (academic papers, books, forms)
-- [ ] Handle edge cases: scanned PDFs (no text), huge PDFs, encrypted PDFs
+- [x] Install pdfjs-dist dependency
+- [x] Implement PDF.js lazy loading
+- [x] Implement PDF parser with text extraction
+- [x] Implement text block grouping (paragraphs from positions)
+- [x] Implement PDF translator with per-page caching
+- [x] Create PDF reader UI in Side Panel
+- [x] Create page view with canvas + text layer + translation overlay
+- [x] Implement page navigation and zoom
+- [x] Add PDF to file upload component
+- [x] Implement translation progress tracking
+- [x] Test with various PDFs (academic papers, books, forms)
+- [x] Handle edge cases: scanned PDFs (no text), huge PDFs, encrypted PDFs
 
 ## Success Criteria
 - PDF renders correctly with PDF.js
