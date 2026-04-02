@@ -40,6 +40,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       targetLang: partial.targetLang ?? current.targetLang,
       sourceLang: partial.sourceLang ?? current.sourceLang,
       provider: partial.provider ?? current.provider,
+      providerMode: partial.providerMode ?? current.providerMode,
       displayMode: partial.displayMode ?? current.displayMode,
       enabledSites: partial.enabledSites ?? current.enabledSites,
       proxyUrl: partial.proxyUrl ?? current.proxyUrl,

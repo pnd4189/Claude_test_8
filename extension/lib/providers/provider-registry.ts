@@ -4,22 +4,39 @@ import type { ProviderName } from './types.ts';
 import { proxyTranslate, proxyBatchTranslate } from './proxy-client.ts';
 import { translateWithGemini } from './gemini-provider.ts';
 import { translateWithGlm } from './glm-provider.ts';
+import { translateWithGroq } from './groq-provider.ts';
+import { translateWithQwen } from './qwen-provider.ts';
 
 export interface TranslateOptions {
   provider: ProviderName;
+  providerMode: 'byok' | 'proxy';
   proxyUrl: string;
   extensionKey?: string;
   apiKeys: Record<ProviderName, string>;
 }
 
-/** Translate single text with fallback chain: proxy → direct Gemini → direct GLM */
+/** Fallback order for BYOK mode — try selected provider first, then others */
+const FALLBACK_ORDER: ProviderName[] = ['gemini', 'groq', 'glm', 'qwen'];
+
+/** Translate single text respecting providerMode, with fallback chain */
 export async function translate(
   text: string,
   from: string,
   to: string,
   options: TranslateOptions
 ): Promise<{ translatedText: string; usedProvider: string }> {
-  // 1. Try proxy if configured
+  // Proxy mode: use proxy only, no BYOK fallback
+  if (options.providerMode === 'proxy') {
+    if (!options.proxyUrl) throw new Error('Proxy URL not configured');
+    const result = await proxyTranslate(text, from, to, options.provider, {
+      proxyUrl: options.proxyUrl,
+      extensionKey: options.extensionKey,
+    });
+    return { translatedText: result.translatedText, usedProvider: `proxy:${result.provider}` };
+  }
+
+  // BYOK mode: try selected provider, then fallback chain
+  // 1. Also try proxy as primary if configured
   if (options.proxyUrl) {
     try {
       const result = await proxyTranslate(text, from, to, options.provider, {
@@ -32,18 +49,26 @@ export async function translate(
     }
   }
 
-  // 2. Try direct with selected provider
+  // 2. Try selected provider directly
   try {
     const translated = await translateDirect(text, from, to, options.provider, options.apiKeys);
     return { translatedText: translated, usedProvider: options.provider };
   } catch {
-    // Fall through to fallback
+    // Fall through to fallback chain
   }
 
-  // 3. Fallback to other provider
-  const fallback: ProviderName = options.provider === 'gemini' ? 'glm' : 'gemini';
-  const translated = await translateDirect(text, from, to, fallback, options.apiKeys);
-  return { translatedText: translated, usedProvider: fallback };
+  // 3. Try remaining providers in fallback order
+  const fallbacks = FALLBACK_ORDER.filter((p) => p !== options.provider);
+  for (const fallback of fallbacks) {
+    try {
+      const translated = await translateDirect(text, from, to, fallback, options.apiKeys);
+      return { translatedText: translated, usedProvider: fallback };
+    } catch {
+      // Try next
+    }
+  }
+
+  throw new Error('All providers failed');
 }
 
 /** Batch translate with fallback */
@@ -84,7 +109,10 @@ async function translateDirect(
   const key = apiKeys[provider];
   if (!key) throw new Error(`No API key for ${provider}`);
 
-  return provider === 'gemini'
-    ? translateWithGemini(text, from, to, key)
-    : translateWithGlm(text, from, to, key);
+  switch (provider) {
+    case 'gemini': return translateWithGemini(text, from, to, key);
+    case 'glm':    return translateWithGlm(text, from, to, key);
+    case 'groq':   return translateWithGroq(text, from, to, key);
+    case 'qwen':   return translateWithQwen(text, from, to, key);
+  }
 }

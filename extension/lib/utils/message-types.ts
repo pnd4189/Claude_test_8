@@ -65,6 +65,7 @@ export interface ExtensionSettings {
   targetLang: TargetLanguage;
   sourceLang: SourceLanguage;
   provider: ProviderName;
+  providerMode: 'byok' | 'proxy';
   displayMode: DisplayMode;
   enabledSites: string[];
   proxyUrl: string;
@@ -77,9 +78,10 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
   targetLang: 'vi',
   sourceLang: 'auto',
   provider: 'gemini',
+  providerMode: 'byok',
   displayMode: 'below',
   enabledSites: ['*'],
   proxyUrl: '',
-  apiKeys: { gemini: '', glm: '' },
+  apiKeys: { gemini: '', glm: '', groq: '', qwen: '' },
   enabled: true,
 };

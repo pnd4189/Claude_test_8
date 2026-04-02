@@ -4,7 +4,7 @@ export type SourceLanguage = 'en' | 'zh' | 'auto';
 export type TargetLanguage = 'vi' | 'en';
 export type LanguagePair = `${SourceLanguage}-${TargetLanguage}`;
 
-export type ProviderName = 'gemini' | 'glm';
+export type ProviderName = 'gemini' | 'glm' | 'groq' | 'qwen';
 
 export type DisplayMode = 'below' | 'hover' | 'side-by-side';
 

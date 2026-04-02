@@ -6,6 +6,9 @@ compatibility_date = "2026-03-01"
 binding = "TRANSLATION_CACHE"
 id = "REPLACE_WITH_KV_NAMESPACE_ID"
 
-# Set secrets via: wrangler secret put GEMINI_API_KEY
-# Set secrets via: wrangler secret put GLM_API_KEY
-# Set secrets via: wrangler secret put EXTENSION_SECRET
+# Secrets (configure via: wrangler secret put <NAME>)
+# GEMINI_API_KEY    — Google Gemini API key (required fallback)
+# GLM_API_KEY       — ZhipuAI GLM API key (required fallback)
+# QWEN_API_KEY      — Alibaba Cloud DashScope API key (PRIMARY provider)
+# GROQ_API_KEY      — Groq API key (optional, for speed)
+# EXTENSION_SECRET  — Optional auth token for extension requests

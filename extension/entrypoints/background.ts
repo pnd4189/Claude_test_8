@@ -93,6 +93,7 @@ async function handleTranslate(
   // Translate via provider registry (proxy → direct with fallback)
   const result = await translate(text, sourceLang, targetLang, {
     provider: settings.provider,
+    providerMode: settings.providerMode,
     proxyUrl: settings.proxyUrl,
     apiKeys: settings.apiKeys,
   });
@@ -111,6 +112,7 @@ async function handleBatchTranslate(
 
   const translations = await batchTranslate(texts, sourceLang, targetLang, {
     provider: settings.provider,
+    providerMode: settings.providerMode,
     proxyUrl: settings.proxyUrl,
     apiKeys: settings.apiKeys,
   });

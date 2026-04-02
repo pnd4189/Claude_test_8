@@ -15,7 +15,7 @@ const POPUP_STYLE = { width: 360, minHeight: 400 };
 
 export default function App() {
   const {
-    loaded, enabled, targetLang, provider, displayMode, sourceLang,
+    loaded, enabled, targetLang, provider, providerMode, displayMode, sourceLang,
     loadSettings, updateSettings,
   } = useSettingsStore();
 
@@ -89,18 +89,54 @@ export default function App() {
         </div>
       </fieldset>
 
-      {/* Provider */}
+      {/* Provider Mode */}
       <fieldset className="space-y-2">
-        <legend className="text-sm font-medium">AI Provider</legend>
-        <select
-          value={provider}
-          onChange={(e) => updateSettings({ provider: e.target.value as ProviderName })}
-          className="block w-full rounded-md border bg-[var(--background)] px-2 py-1.5 text-sm"
-        >
-          <option value="gemini">Gemini</option>
-          <option value="glm">GLM (ChatGLM)</option>
-        </select>
+        <legend className="text-sm font-medium">Mode</legend>
+        <div className="flex gap-1">
+          <button
+            onClick={() => updateSettings({ providerMode: 'byok' })}
+            className={`flex-1 rounded-md px-2 py-1.5 text-xs transition-colors ${
+              providerMode === 'byok'
+                ? 'bg-[var(--primary)] text-[var(--primary-foreground)]'
+                : 'bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:bg-[var(--accent)]'
+            }`}
+          >
+            Free (BYOK)
+          </button>
+          <button
+            onClick={() => updateSettings({ providerMode: 'proxy' })}
+            className={`flex-1 rounded-md px-2 py-1.5 text-xs transition-colors ${
+              providerMode === 'proxy'
+                ? 'bg-[var(--primary)] text-[var(--primary-foreground)]'
+                : 'bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:bg-[var(--accent)]'
+            }`}
+          >
+            Built-in
+          </button>
+        </div>
       </fieldset>
+
+      {/* Provider (BYOK mode only) */}
+      {providerMode === 'byok' ? (
+        <fieldset className="space-y-2">
+          <legend className="text-sm font-medium">AI Provider</legend>
+          <select
+            value={provider}
+            onChange={(e) => updateSettings({ provider: e.target.value as ProviderName })}
+            className="block w-full rounded-md border bg-[var(--background)] px-2 py-1.5 text-sm"
+          >
+            <option value="gemini">Gemini</option>
+            <option value="glm">GLM (ChatGLM)</option>
+            <option value="groq">Groq (Llama)</option>
+            <option value="qwen">Qwen (Alibaba)</option>
+          </select>
+          <p className="text-xs text-[var(--muted-foreground)]">Configure API keys in Settings</p>
+        </fieldset>
+      ) : (
+        <div className="rounded-md bg-[var(--secondary)] px-3 py-2 text-xs text-[var(--secondary-foreground)]">
+          Using built-in AI (Qwen) — no API key needed
+        </div>
+      )}
 
       {/* Display Mode */}
       <fieldset className="space-y-2">

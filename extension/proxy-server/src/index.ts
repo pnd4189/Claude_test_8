@@ -4,26 +4,32 @@ import { getCached, setCached } from './kv-cache.ts';
 import { checkRateLimit } from './rate-limiter.ts';
 import { translateWithGemini } from './providers/gemini.ts';
 import { translateWithGlm } from './providers/glm.ts';
+import { translateWithQwen } from './providers/qwen.ts';
+import { translateWithGroq } from './providers/groq.ts';
 
 interface Env {
   TRANSLATION_CACHE: KVNamespace;
   GEMINI_API_KEY: string;
   GLM_API_KEY: string;
+  QWEN_API_KEY?: string;    // Primary provider
+  GROQ_API_KEY?: string;    // Optional speed provider
   EXTENSION_SECRET?: string;
 }
+
+type ProxyProvider = 'qwen' | 'gemini' | 'glm' | 'groq';
 
 interface TranslateBody {
   text: string;
   from: string;
   to: string;
-  provider?: 'gemini' | 'glm';
+  provider?: ProxyProvider;
 }
 
 interface BatchTranslateBody {
   texts: string[];
   from: string;
   to: string;
-  provider?: 'gemini' | 'glm';
+  provider?: ProxyProvider;
 }
 
 const CORS_HEADERS = {
@@ -89,33 +95,60 @@ export default {
   },
 } satisfies ExportedHandler<Env>;
 
+/** Build fallback order: requested provider first, then Qwen → Gemini → GLM */
+function buildFallbackOrder(requested: ProxyProvider, env: Env): ProxyProvider[] {
+  const available: ProxyProvider[] = [];
+  if (env.QWEN_API_KEY) available.push('qwen');
+  available.push('gemini');   // always available (required)
+  available.push('glm');      // always available (required)
+  if (env.GROQ_API_KEY) available.push('groq');
+
+  // Put requested provider first if available
+  const order = [requested, ...available.filter((p) => p !== requested)];
+  return order.filter((p, i) => order.indexOf(p) === i); // deduplicate
+}
+
+async function callProvider(
+  text: string,
+  from: string,
+  to: string,
+  provider: ProxyProvider,
+  env: Env
+): Promise<string> {
+  switch (provider) {
+    case 'qwen':   return translateWithQwen(text, from, to, env.QWEN_API_KEY!);
+    case 'gemini': return translateWithGemini(text, from, to, env.GEMINI_API_KEY);
+    case 'glm':    return translateWithGlm(text, from, to, env.GLM_API_KEY);
+    case 'groq':   return translateWithGroq(text, from, to, env.GROQ_API_KEY!);
+  }
+}
+
 async function translateText(
   text: string,
   from: string,
   to: string,
-  provider: 'gemini' | 'glm',
+  provider: ProxyProvider,
   env: Env
-): Promise<string> {
+): Promise<{ translated: string; usedProvider: ProxyProvider }> {
   // Try cache first
   const cached = await getCached(env.TRANSLATION_CACHE, text, from, to);
-  if (cached) return cached;
+  if (cached) return { translated: cached, usedProvider: provider };
 
-  // Translate with selected provider, fallback to the other
-  let translated: string;
-  try {
-    translated = provider === 'gemini'
-      ? await translateWithGemini(text, from, to, env.GEMINI_API_KEY)
-      : await translateWithGlm(text, from, to, env.GLM_API_KEY);
-  } catch {
-    // Fallback to other provider
-    translated = provider === 'gemini'
-      ? await translateWithGlm(text, from, to, env.GLM_API_KEY)
-      : await translateWithGemini(text, from, to, env.GEMINI_API_KEY);
+  // Try providers in fallback order
+  const fallbackOrder = buildFallbackOrder(provider, env);
+  let lastError: Error | null = null;
+
+  for (const p of fallbackOrder) {
+    try {
+      const translated = await callProvider(text, from, to, p, env);
+      await setCached(env.TRANSLATION_CACHE, text, translated, from, to);
+      return { translated, usedProvider: p };
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+    }
   }
 
-  // Cache result
-  await setCached(env.TRANSLATION_CACHE, text, translated, from, to);
-  return translated;
+  throw lastError ?? new Error('All providers failed');
 }
 
 async function handleTranslate(request: Request, env: Env): Promise<Response> {
@@ -124,8 +157,12 @@ async function handleTranslate(request: Request, env: Env): Promise<Response> {
     return errorResponse('Missing required fields: text, from, to', 400);
   }
 
-  const translated = await translateText(body.text, body.from, body.to, body.provider ?? 'gemini', env);
-  return json({ translatedText: translated, provider: body.provider ?? 'gemini' });
+  // Default to Qwen if available, else Gemini
+  const defaultProvider: ProxyProvider = env.QWEN_API_KEY ? 'qwen' : 'gemini';
+  const { translated, usedProvider } = await translateText(
+    body.text, body.from, body.to, body.provider ?? defaultProvider, env
+  );
+  return json({ translatedText: translated, provider: usedProvider });
 }
 
 async function handleBatchTranslate(request: Request, env: Env): Promise<Response> {
@@ -137,9 +174,12 @@ async function handleBatchTranslate(request: Request, env: Env): Promise<Respons
     return errorResponse('Maximum 50 texts per batch', 400);
   }
 
-  const provider = body.provider ?? 'gemini';
+  const defaultProvider: ProxyProvider = env.QWEN_API_KEY ? 'qwen' : 'gemini';
+  const provider = body.provider ?? defaultProvider;
   const results = await Promise.all(
-    body.texts.map((text) => translateText(text, body.from, body.to, provider, env))
+    body.texts.map((text) =>
+      translateText(text, body.from, body.to, provider, env).then((r) => r.translated)
+    )
   );
 
   return json({ translations: results, provider });
@@ -148,8 +188,10 @@ async function handleBatchTranslate(request: Request, env: Env): Promise<Respons
 function handleProviders(env: Env): Response {
   return json({
     providers: [
-      { id: 'gemini', name: 'Gemini', available: !!env.GEMINI_API_KEY },
-      { id: 'glm', name: 'GLM (ChatGLM)', available: !!env.GLM_API_KEY },
+      { id: 'qwen',   name: 'Qwen (Alibaba)',  available: !!env.QWEN_API_KEY },
+      { id: 'gemini', name: 'Gemini',           available: !!env.GEMINI_API_KEY },
+      { id: 'glm',    name: 'GLM (ChatGLM)',    available: !!env.GLM_API_KEY },
+      { id: 'groq',   name: 'Groq',             available: !!env.GROQ_API_KEY },
     ],
   });
 }
