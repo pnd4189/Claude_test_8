@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createOpenRouterClient } from '@/lib/providers/openrouter';
+import { getProvider } from '@/lib/providers/provider-factory';
 import { translationCache, ratelimit } from '@/lib/redis';
 
 export const runtime = 'nodejs';
@@ -22,7 +22,7 @@ interface TranslateRequest {
 export async function POST(request: NextRequest) {
   try {
     // Rate limiting
-    const ip = request.ip ?? 'anonymous';
+    const ip = request.headers.get('x-forwarded-for') ?? request.headers.get('x-real-ip') ?? 'anonymous';
     const { success, limit, remaining, reset } = await ratelimit.limit(ip);
 
     if (!success) {
@@ -83,34 +83,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Translate based on provider
-    let translatedText: string;
-
-    switch (provider) {
-      case 'openrouter': {
-        const client = createOpenRouterClient();
-        if (!client) {
-          return NextResponse.json(
-            { error: 'OpenRouter not configured' },
-            { status: 500 }
-          );
-        }
-
-        translatedText = await client.translate(
-          text,
-          sourceLang,
-          targetLang,
-          model
-        );
-        break;
-      }
-
-      // TODO: Add other providers (Gemini, Mistral, Groq)
-      default:
-        return NextResponse.json(
-          { error: `Unsupported provider: ${provider}` },
-          { status: 400 }
-        );
+    const client = getProvider(provider);
+    if (!client) {
+      return NextResponse.json(
+        { error: `Provider "${provider}" not configured. Check API keys.` },
+        { status: 400 }
+      );
     }
+
+    const translatedText = await client.translate(text, sourceLang, targetLang, model);
 
     // Cache the result
     await translationCache.set(

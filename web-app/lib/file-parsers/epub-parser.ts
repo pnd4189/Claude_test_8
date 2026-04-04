@@ -26,7 +26,7 @@ export interface ParsedDocument {
 export async function parseEpub(fileBuffer: Buffer): Promise<ParsedDocument> {
   return new Promise((resolve, reject) => {
     try {
-      const epub = new EPub(fileBuffer);
+      const epub = new EPub(fileBuffer as unknown as string);
 
       epub.on('error', (error) => {
         reject(new Error(`EPUB parsing error: ${error.message}`));
@@ -38,7 +38,7 @@ export async function parseEpub(fileBuffer: Buffer): Promise<ParsedDocument> {
             title: epub.metadata.title || 'Untitled',
             author: epub.metadata.creator || 'Unknown',
             language: epub.metadata.language || 'unknown',
-            publisher: epub.metadata.publisher,
+            publisher: (epub.metadata as any).publisher,
             date: epub.metadata.date,
             format: 'epub',
           };

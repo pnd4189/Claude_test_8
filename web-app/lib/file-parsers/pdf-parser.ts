@@ -4,7 +4,8 @@
  * Parses PDF files and extracts text content
  */
 
-import pdfParse from 'pdf-parse';
+import * as pdfParseModule from 'pdf-parse';
+const pdfParse = (pdfParseModule as any).default ?? pdfParseModule;
 
 export interface ParsedDocument {
   content: string;

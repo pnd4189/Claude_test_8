@@ -8,6 +8,7 @@ import { FileUpload } from '@/components/file-upload';
 import { TranslationProgress } from '@/components/translation-progress';
 import { parseFile, detectFormatFromFilename, type FileFormat } from '@/lib/file-parsers';
 import { translateWithChunks } from '@/lib/chunked-translator';
+import { exportTranslatedEpub } from '@/lib/file-exporters/epub-exporter';
 import type { TranslationChunk } from '@/store/translation-store';
 
 const SUPPORTED_LANGUAGES = [
@@ -36,6 +37,7 @@ export default function TranslatePage() {
   const [isTranslating, setIsTranslating] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [translatedText, setTranslatedText] = useState('');
+  const [originalFileData, setOriginalFileData] = useState<ArrayBuffer | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleFileSelect = (file: File) => {
@@ -55,6 +57,7 @@ export default function TranslatePage() {
       // Parse file
       const format = detectFormatFromFilename(selectedFile.name) as FileFormat;
       const arrayBuffer = await selectedFile.arrayBuffer();
+      setOriginalFileData(arrayBuffer);
       const buffer = Buffer.from(arrayBuffer);
 
       console.log(`Parsing ${format} file...`);
@@ -105,14 +108,34 @@ export default function TranslatePage() {
     }
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!translatedText) return;
 
-    const blob = new Blob([translatedText], { type: 'text/plain' });
+    const fileName = selectedFile?.name || 'document';
+    const isEpub = fileName.toLowerCase().endsWith('.epub');
+
+    let blob: Blob;
+    let downloadName: string;
+
+    if (isEpub && originalFileData) {
+      // Export as EPUB preserving original format
+      try {
+        blob = await exportTranslatedEpub(originalFileData, translatedText, 'bilingual');
+        downloadName = `translated-${fileName}`;
+      } catch {
+        // Fallback to TXT if EPUB export fails
+        blob = new Blob([translatedText], { type: 'text/plain' });
+        downloadName = `translated-${fileName}.txt`;
+      }
+    } else {
+      blob = new Blob([translatedText], { type: 'text/plain' });
+      downloadName = `translated-${fileName}.txt`;
+    }
+
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `translated-${selectedFile?.name || 'document'}.txt`;
+    a.download = downloadName;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
