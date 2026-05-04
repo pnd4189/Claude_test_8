@@ -7,8 +7,10 @@ binding = "TRANSLATION_CACHE"
 id = "REPLACE_WITH_KV_NAMESPACE_ID"
 
 # Secrets (configure via: wrangler secret put <NAME>)
+# FREELLMAPI_URL    — FreeLLMAPI base URL (e.g. https://freellmapi.example.com)
+# FREELLMAPI_KEY    — FreeLLMAPI unified API key
 # GEMINI_API_KEY    — Google Gemini API key (required fallback)
 # GLM_API_KEY       — ZhipuAI GLM API key (required fallback)
-# QWEN_API_KEY      — Alibaba Cloud DashScope API key (PRIMARY provider)
+# QWEN_API_KEY      — Alibaba Cloud DashScope API key (optional)
 # GROQ_API_KEY      — Groq API key (optional, for speed)
-# EXTENSION_SECRET  — Optional auth token for extension requests
+# EXTENSION_SECRET  — Auth token for extension requests

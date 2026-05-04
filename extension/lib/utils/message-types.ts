@@ -69,6 +69,7 @@ export interface ExtensionSettings {
   displayMode: DisplayMode;
   enabledSites: string[];
   proxyUrl: string;
+  freellmapiUrl: string;
   apiKeys: Record<ProviderName, string>;
   enabled: boolean;
 }
@@ -82,6 +83,7 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
   displayMode: 'below',
   enabledSites: ['*'],
   proxyUrl: '',
-  apiKeys: { gemini: '', glm: '', groq: '', qwen: '' },
+  freellmapiUrl: '',
+  apiKeys: { freellmapi: '', gemini: '', glm: '', groq: '', qwen: '' },
   enabled: true,
 };

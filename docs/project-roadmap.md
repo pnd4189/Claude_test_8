@@ -23,7 +23,8 @@ All core components are functional and deployed.
 - [x] Web page translation (3 display modes)
 - [x] Video subtitle translation
 - [x] EPUB/PDF reader in extension
-- [x] 5 AI providers with fallback chain
+- [x] 6 AI providers with fallback chain
+- [x] FreeLLMAPI — tự host proxy gom 11 provider miễn phí (~1B tokens/tháng)
 - [x] API key rotation (up to 20 per provider)
 - [x] Proxy server with KV caching
 - [x] Security headers and CORS hardening

@@ -53,6 +53,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       displayMode: partial.displayMode ?? current.displayMode,
       enabledSites: partial.enabledSites ?? current.enabledSites,
       proxyUrl: partial.proxyUrl ?? current.proxyUrl,
+      freellmapiUrl: partial.freellmapiUrl ?? current.freellmapiUrl,
       apiKeys: partial.apiKeys ?? current.apiKeys,
       enabled: partial.enabled ?? current.enabled,
     };

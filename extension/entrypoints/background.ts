@@ -95,6 +95,7 @@ async function handleTranslate(
     provider: settings.provider,
     providerMode: settings.providerMode,
     proxyUrl: settings.proxyUrl,
+    freellmapiUrl: settings.freellmapiUrl,
     apiKeys: settings.apiKeys,
   });
 
@@ -114,6 +115,7 @@ async function handleBatchTranslate(
     provider: settings.provider,
     providerMode: settings.providerMode,
     proxyUrl: settings.proxyUrl,
+    freellmapiUrl: settings.freellmapiUrl,
     apiKeys: settings.apiKeys,
   });
 

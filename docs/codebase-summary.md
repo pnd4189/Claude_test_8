@@ -31,7 +31,7 @@ AI-Translation-Platform/
 |------|-------|----------|
 | Pages & API routes | 8 | Next.js 16 App Router, next-intl |
 | Components | 10 | React 19, Tailwind CSS 4 |
-| Providers | 8 | OpenRouter, Qwen, Groq, GLM, Gemini |
+| Providers | 9 | FreeLLMAPI, OpenRouter, Qwen, Groq, GLM, Gemini |
 | Shared utilities | 3 | logger, translation-prompt, model-filters |
 | File parsers | 4 | pdf-parse, mammoth, epub, JSZip |
 | Exporters | 1 | EPUB bilingual/translated export |
@@ -45,7 +45,7 @@ AI-Translation-Platform/
 |------|-------|----------|
 | Entrypoints | 12 | WXT 0.20, React 19 |
 | Translators | 9 | Content detection, bilingual rendering, queue |
-| Providers | 7 | Qwen, Groq, GLM, Gemini, proxy client |
+| Providers | 8 | FreeLLMAPI, Qwen, Groq, GLM, Gemini, proxy client |
 | Shared utilities | 6 | logger, prompt-builder, text-chunker, language-detector, cn, message-types |
 | Parsers | 4 | EPUB, PDF, subtitles |
 | Storage | 3 | IndexedDB (idb), reading progress |
@@ -58,19 +58,22 @@ AI-Translation-Platform/
 | Area | Files | Key Tech |
 |------|-------|----------|
 | Core | 4 | Cloudflare Workers, KV cache, rate limiter, prompt-builder |
-| Providers | 4 | Qwen, Groq, GLM, Gemini |
+| Providers | 5 | FreeLLMAPI, Qwen, Groq, GLM, Gemini |
 
 **Key features:** Shared AI proxy with KV caching, rate limiting, multi-provider support, deployed to Cloudflare Workers (free tier).
 
 ## AI Provider Support
 
-| Provider | Web App | Extension | API Format |
-|----------|---------|-----------|------------|
-| OpenRouter | Yes | — | OpenAI-compatible |
-| Qwen (AlibabaCloud) | Yes | Yes | OpenAI-compatible |
-| Groq (Llama) | Yes | Yes | OpenAI-compatible |
-| GLM (ChatGLM) | Yes | Yes | OpenAI-compatible |
-| Gemini (Google) | Yes | Yes | Custom REST |
+| Provider | Web App | Extension | Proxy | API Format |
+|----------|---------|-----------|-------|------------|
+| FreeLLMAPI | Yes | Yes | Yes | OpenAI-compatible |
+| OpenRouter | Yes | — | — | OpenAI-compatible |
+| Qwen (AlibabaCloud) | Yes | Yes | Yes | OpenAI-compatible |
+| Groq (Llama) | Yes | Yes | Yes | OpenAI-compatible |
+| GLM (ChatGLM) | Yes | Yes | Yes | OpenAI-compatible |
+| Gemini (Google) | Yes | Yes | Yes | Custom REST |
+
+FreeLLMAPI là self-hosted proxy chạy trên miniPC, gom 11 free-tier provider (~1B tokens/tháng). #1 priority trong fallback chain — các provider còn lại làm fallback khi miniPC offline.
 
 All providers support API key rotation (up to 20 keys) with automatic fallback chain.
 
@@ -95,7 +98,7 @@ All providers support API key rotation (up to 20 keys) with automatic fallback c
 | Source files | ~100 |
 | Lines of code | ~8,200 |
 | Components | 3 (web-app, extension, proxy-server) |
-| AI providers | 5 |
+| AI providers | 6 |
 | Languages supported | EN, VI (UI) |
 
 ## Notes

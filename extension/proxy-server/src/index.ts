@@ -6,11 +6,12 @@ import { translateWithGemini } from './providers/gemini.ts';
 import { translateWithGlm } from './providers/glm.ts';
 import { translateWithQwen } from './providers/qwen.ts';
 import { translateWithGroq } from './providers/groq.ts';
+import { translateWithFreeLLMAPI } from './providers/freellmapi.ts';
 
-type ProxyProvider = 'qwen' | 'gemini' | 'glm' | 'groq';
+type ProxyProvider = 'freellmapi' | 'qwen' | 'gemini' | 'glm' | 'groq';
 
 const ALLOWED_LANGS = new Set(['en','vi','zh','ja','ko','fr','de','es','pt','ru','th','auto']);
-const VALID_PROVIDERS = new Set<ProxyProvider>(['qwen','gemini','glm','groq']);
+const VALID_PROVIDERS = new Set<ProxyProvider>(['freellmapi','qwen','gemini','glm','groq']);
 const ALLOWED_ORIGINS = [
   /^https:\/\/[a-z0-9-]+\.chromiumapp\.org$/,
   /^chrome-extension:\/\/[a-z0-9-]+$/,
@@ -22,6 +23,8 @@ interface Env {
   GLM_API_KEY: string;
   QWEN_API_KEY?: string;
   GROQ_API_KEY?: string;
+  FREELLMAPI_URL?: string;
+  FREELLMAPI_KEY?: string;
   EXTENSION_SECRET: string;
 }
 
@@ -116,17 +119,21 @@ export default {
   },
 } satisfies ExportedHandler<Env>;
 
-/** Build fallback order: requested provider first, then Qwen → Gemini → GLM */
+/** Build fallback order: requested provider first (if configured), then others */
 function buildFallbackOrder(requested: ProxyProvider, env: Env): ProxyProvider[] {
   const available: ProxyProvider[] = [];
+  if (env.FREELLMAPI_URL && env.FREELLMAPI_KEY) available.push('freellmapi');
   if (env.QWEN_API_KEY) available.push('qwen');
   available.push('gemini');   // always available (required)
   available.push('glm');      // always available (required)
   if (env.GROQ_API_KEY) available.push('groq');
 
-  // Put requested provider first if available
-  const order = [requested, ...available.filter((p) => p !== requested)];
-  return order.filter((p, i) => order.indexOf(p) === i); // deduplicate
+  // Put requested provider first only if configured, otherwise use available order
+  if (available.includes(requested)) {
+    const order = [requested, ...available.filter((p) => p !== requested)];
+    return order;
+  }
+  return available;
 }
 
 async function callProvider(
@@ -137,6 +144,7 @@ async function callProvider(
   env: Env
 ): Promise<string> {
   switch (provider) {
+    case 'freellmapi': return translateWithFreeLLMAPI(text, from, to, env.FREELLMAPI_URL!, env.FREELLMAPI_KEY!);
     case 'qwen':   return translateWithQwen(text, from, to, env.QWEN_API_KEY!);
     case 'gemini': return translateWithGemini(text, from, to, env.GEMINI_API_KEY);
     case 'glm':    return translateWithGlm(text, from, to, env.GLM_API_KEY);
@@ -247,6 +255,7 @@ async function handleBatchTranslate(request: Request, env: Env, corsHeaders: Rec
 function handleProviders(env: Env, corsHeaders: Record<string, string>): Response {
   return json({
     providers: [
+      { id: 'freellmapi', name: 'FreeLLMAPI (11 providers)', available: !!(env.FREELLMAPI_URL && env.FREELLMAPI_KEY) },
       { id: 'qwen',   name: 'Qwen (Alibaba)',  available: !!env.QWEN_API_KEY },
       { id: 'gemini', name: 'Gemini',           available: !!env.GEMINI_API_KEY },
       { id: 'glm',    name: 'GLM (ChatGLM)',    available: !!env.GLM_API_KEY },

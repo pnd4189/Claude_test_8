@@ -17,7 +17,7 @@
          ▼                       ▼                         ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │                        AI Providers                                  │
-│  OpenRouter │ Qwen │ Groq │ GLM (ChatGLM) │ Gemini (Google)        │
+│  FreeLLMAPI │ OpenRouter │ Qwen │ Groq │ GLM (ChatGLM) │ Gemini (Google) │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -26,6 +26,7 @@
 - **Web App** → Direct API calls to AI providers (server-side)
 - **Extension** → Direct API calls (BYOK mode) OR via Proxy Server (built-in mode)
 - **Proxy Server** → Forwards requests to AI providers, caches responses in KV
+- **FreeLLMAPI** → Self-hosted on miniPC via Cloudflare Tunnel; #1 priority in fallback chain; aggregates 11 free-tier providers (~1B tokens/month)
 
 ## Data Flow
 

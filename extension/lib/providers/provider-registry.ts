@@ -7,17 +7,19 @@ import { translateWithGemini } from './gemini-provider.ts';
 import { translateWithGlm } from './glm-provider.ts';
 import { translateWithGroq } from './groq-provider.ts';
 import { translateWithQwen } from './qwen-provider.ts';
+import { translateWithFreeLLMAPI } from './freellmapi-provider.ts';
 
 export interface TranslateOptions {
   provider: ProviderName;
   providerMode: 'byok' | 'proxy';
   proxyUrl: string;
+  freellmapiUrl: string;
   extensionKey?: string;
   apiKeys: Record<ProviderName, string>;
 }
 
 /** Fallback order for BYOK mode — try selected provider first, then others */
-const FALLBACK_ORDER: ProviderName[] = ['gemini', 'groq', 'glm', 'qwen'];
+const FALLBACK_ORDER: ProviderName[] = ['freellmapi', 'gemini', 'groq', 'glm', 'qwen'];
 
 /** Translate single text respecting providerMode, with fallback chain */
 export async function translate(
@@ -36,7 +38,17 @@ export async function translate(
     return { translatedText: result.translatedText, usedProvider: `proxy:${result.provider}` };
   }
 
-  // BYOK mode: try selected provider, then fallback chain
+  // BYOK mode: try FreeLLMAPI first (if configured), then selected provider, then fallback chain
+  // 0. Try FreeLLMAPI first — #1 priority
+  if (options.freellmapiUrl && options.apiKeys['freellmapi']) {
+    try {
+      const translated = await translateWithFreeLLMAPI(text, from, to, options.freellmapiUrl, options.apiKeys['freellmapi']);
+      return { translatedText: translated, usedProvider: 'freellmapi' };
+    } catch {
+      // FreeLLMAPI unavailable (miniPC off), fall through
+    }
+  }
+
   // 1. Also try proxy as primary if configured
   if (options.proxyUrl) {
     try {
@@ -137,6 +149,7 @@ async function translateDirect(
   if (!key) throw new Error(`No API key for ${provider}`);
 
   switch (provider) {
+    case 'freellmapi': throw new Error('FreeLLMAPI handled in translate(), not via translateDirect()');
     case 'gemini': return translateWithGemini(text, from, to, key);
     case 'glm':    return translateWithGlm(text, from, to, key);
     case 'groq':   return translateWithGroq(text, from, to, key);

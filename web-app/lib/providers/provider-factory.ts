@@ -5,6 +5,7 @@ import { createQwenClient } from './qwen';
 import { createGroqClient } from './groq';
 import { createGlmClient } from './glm';
 import { createGeminiClient } from './gemini';
+import { createFreeLLMAPIClient } from './freellmapi';
 
 export interface TranslateClient {
   translate(text: string, sourceLang: string, targetLang: string, model?: string): Promise<string>;
@@ -18,6 +19,7 @@ const PROVIDER_FACTORIES: Record<string, () => TranslateClient | null> = {
   groq: createGroqClient,
   glm: createGlmClient,
   gemini: createGeminiClient,
+  freellmapi: createFreeLLMAPIClient,
 };
 
 /** Returns a cached provider client or null if not configured */
