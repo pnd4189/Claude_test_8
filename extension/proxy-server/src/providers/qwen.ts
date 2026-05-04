@@ -1,11 +1,8 @@
 /** Qwen (Alibaba Cloud DashScope) translation provider — OpenAI-compatible */
 
-const QWEN_URL = 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions';
+import { buildSystemPrompt } from '../prompt-builder.ts';
 
-function buildSystemPrompt(from: string, to: string): string {
-  const fromLabel = from === 'auto' ? 'the detected language' : from;
-  return `You are a professional translator. Translate the following text from ${fromLabel} to ${to}. Output only the translation, nothing else.`;
-}
+const QWEN_URL = 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions';
 
 /** Translate text using Qwen API */
 export async function translateWithQwen(

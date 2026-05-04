@@ -1,6 +1,7 @@
 /** Provider registry — manages translation providers with fallback chain */
 
 import type { ProviderName } from './types.ts';
+import { logger } from '@/lib/utils/logger.ts';
 import { proxyTranslate, proxyBatchTranslate } from './proxy-client.ts';
 import { translateWithGemini } from './gemini-provider.ts';
 import { translateWithGlm } from './glm-provider.ts';
@@ -71,6 +72,28 @@ export async function translate(
   throw new Error('All providers failed');
 }
 
+const MAX_CONCURRENT = 3;
+
+async function limitConcurrency<T>(tasks: (() => Promise<T>)[], limit: number): Promise<PromiseSettledResult<T>[]> {
+  const results: PromiseSettledResult<T>[] = new Array(tasks.length);
+  let nextIdx = 0;
+
+  async function runNext(): Promise<void> {
+    while (nextIdx < tasks.length) {
+      const idx = nextIdx++;
+      try {
+        results[idx] = { status: 'fulfilled', value: await tasks[idx]() };
+      } catch (err) {
+        results[idx] = { status: 'rejected', reason: err };
+      }
+    }
+  }
+
+  const workers = Array.from({ length: Math.min(limit, tasks.length) }, () => runNext());
+  await Promise.all(workers);
+  return results;
+}
+
 /** Batch translate with fallback */
 export async function batchTranslate(
   texts: string[],
@@ -91,11 +114,15 @@ export async function batchTranslate(
     }
   }
 
-  // Fallback: translate individually
-  const results = await Promise.all(
-    texts.map((text) => translate(text, from, to, options).then((r) => r.translatedText))
-  );
-  return results;
+  // Fallback: translate individually with concurrency limit and graceful partial failure
+  const tasks = texts.map((text) => () => translate(text, from, to, options).then(r => r.translatedText));
+  const settled = await limitConcurrency(tasks, MAX_CONCURRENT);
+
+  return settled.map((result, i) => {
+    if (result.status === 'fulfilled') return result.value;
+    logger.warn('provider-registry', `Failed to translate text at index ${i}`, result.reason instanceof Error ? result.reason.message : String(result.reason));
+    return texts[i];
+  });
 }
 
 /** Direct API call to a specific provider */

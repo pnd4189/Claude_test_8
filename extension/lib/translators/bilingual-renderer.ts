@@ -5,6 +5,9 @@ import type { DisplayMode } from '../providers/types.ts';
 const TRANSLATED_CLASS = 'ait-translated';
 const WRAPPER_CLASS = 'ait-wrapper';
 
+/** Tracked hover event listeners for cleanup */
+const hoverListeners = new Map<HTMLElement, { enter: () => void; leave: () => void }>();
+
 /** Render translated text next to original element */
 export function renderTranslation(
   originalEl: HTMLElement,
@@ -32,6 +35,14 @@ export function removeTranslation(originalEl: HTMLElement): void {
   const id = originalEl.getAttribute('data-ait-id');
   if (!id) return;
 
+  // Remove tracked hover listeners
+  const listeners = hoverListeners.get(originalEl);
+  if (listeners) {
+    originalEl.removeEventListener('mouseenter', listeners.enter);
+    originalEl.removeEventListener('mouseleave', listeners.leave);
+    hoverListeners.delete(originalEl);
+  }
+
   // Remove below/hover translation
   const existing = originalEl.parentElement?.querySelector(`[data-ait-for="${id}"]`);
   existing?.remove();
@@ -46,6 +57,12 @@ export function removeTranslation(originalEl: HTMLElement): void {
 
 /** Remove all translations from the page */
 export function removeAllTranslations(): void {
+  for (const [el, listeners] of hoverListeners) {
+    el.removeEventListener('mouseenter', listeners.enter);
+    el.removeEventListener('mouseleave', listeners.leave);
+  }
+  hoverListeners.clear();
+
   document.querySelectorAll(`.${TRANSLATED_CLASS}`).forEach((el) => el.remove());
   document.querySelectorAll(`.${WRAPPER_CLASS}`).forEach((wrapper) => {
     const original = wrapper.querySelector('[data-ait-id]');
@@ -77,8 +94,11 @@ function renderHover(el: HTMLElement, text: string): void {
 
   el.insertAdjacentElement('afterend', tooltip);
 
-  el.addEventListener('mouseenter', () => { tooltip.style.display = 'block'; });
-  el.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+  const enter = () => { tooltip.style.display = 'block'; };
+  const leave = () => { tooltip.style.display = 'none'; };
+  el.addEventListener('mouseenter', enter);
+  el.addEventListener('mouseleave', leave);
+  hoverListeners.set(el, { enter, leave });
 }
 
 /** Side-by-side mode: wrap in flex container */

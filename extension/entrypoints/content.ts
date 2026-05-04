@@ -97,7 +97,8 @@ export default defineContentScript({
     }
 
     // Listen for messages from popup/background
-    chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      if (sender.id !== chrome.runtime.id) return;
       if (message.action === 'toggle-translation') {
         enabled = message.enabled;
         if (enabled) startTranslation();

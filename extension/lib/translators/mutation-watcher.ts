@@ -5,6 +5,7 @@ const DEBOUNCE_MS = 600;
 export class MutationWatcher {
   private observer: MutationObserver | null = null;
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  private pendingElements: HTMLElement[] = [];
   private callback: (addedNodes: HTMLElement[]) => void;
 
   constructor(callback: (addedNodes: HTMLElement[]) => void) {
@@ -16,30 +17,32 @@ export class MutationWatcher {
     this.disconnect();
 
     this.observer = new MutationObserver((mutations) => {
-      const addedElements: HTMLElement[] = [];
-
       for (const mutation of mutations) {
         for (const node of mutation.addedNodes) {
           if (node.nodeType === Node.ELEMENT_NODE) {
             const el = node as HTMLElement;
-            // Skip our own translation elements
             if (el.classList.contains('ait-translated') || el.classList.contains('ait-wrapper')) continue;
-            addedElements.push(el);
+            this.pendingElements.push(el);
           }
         }
       }
 
-      if (addedElements.length > 0) {
-        this.debouncedCallback(addedElements);
+      if (this.pendingElements.length > 0) {
+        this.scheduleDispatch();
       }
     });
 
     this.observer.observe(container, { childList: true, subtree: true });
   }
 
-  private debouncedCallback(elements: HTMLElement[]): void {
+  private scheduleDispatch(): void {
     if (this.debounceTimer) clearTimeout(this.debounceTimer);
-    this.debounceTimer = setTimeout(() => this.callback(elements), DEBOUNCE_MS);
+    this.debounceTimer = setTimeout(() => {
+      const elements = this.pendingElements;
+      this.pendingElements = [];
+      this.debounceTimer = null;
+      this.callback(elements);
+    }, DEBOUNCE_MS);
   }
 
   /** Stop observing */
@@ -47,5 +50,7 @@ export class MutationWatcher {
     this.observer?.disconnect();
     this.observer = null;
     if (this.debounceTimer) clearTimeout(this.debounceTimer);
+    this.debounceTimer = null;
+    this.pendingElements = [];
   }
 }

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 export interface TranslationChunk {
   id: string;
@@ -39,80 +40,88 @@ interface TranslationStore {
   clearAllJobs: () => void;
 }
 
-export const useTranslationStore = create<TranslationStore>((set, get) => ({
-  currentJob: null,
-  jobs: [],
-  isTranslating: false,
-
-  createJob: (jobData) => {
-    const job: TranslationJob = {
-      ...jobData,
-      id: `job-${Date.now()}-${Math.random().toString(36).substring(7)}`,
-      status: 'idle',
-      progress: 0,
-      chunks: [],
-      createdAt: new Date(),
-    };
-
-    set((state) => ({
-      jobs: [job, ...state.jobs],
-      currentJob: job,
-      isTranslating: true,
-    }));
-  },
-
-  updateJob: (id, updates) => {
-    set((state) => ({
-      jobs: state.jobs.map((job) =>
-        job.id === id ? { ...job, ...updates } : job
-      ),
-      currentJob:
-        state.currentJob?.id === id
-          ? { ...state.currentJob, ...updates }
-          : state.currentJob,
-      isTranslating:
-        updates.status === 'completed' || updates.status === 'failed'
-          ? false
-          : state.isTranslating,
-    }));
-  },
-
-  updateChunk: (jobId, chunkId, updates) => {
-    set((state) => ({
-      jobs: state.jobs.map((job) =>
-        job.id === jobId
-          ? {
-              ...job,
-              chunks: job.chunks.map((chunk) =>
-                chunk.id === chunkId ? { ...chunk, ...updates } : chunk
-              ),
-            }
-          : job
-      ),
-      currentJob:
-        state.currentJob?.id === jobId
-          ? {
-              ...state.currentJob,
-              chunks: state.currentJob.chunks.map((chunk) =>
-                chunk.id === chunkId ? { ...chunk, ...updates } : chunk
-              ),
-            }
-          : state.currentJob,
-    }));
-  },
-
-  setCurrentJob: (job) => set({ currentJob: job }),
-
-  clearJob: (id) =>
-    set((state) => ({
-      jobs: state.jobs.filter((job) => job.id !== id),
-      currentJob: state.currentJob?.id === id ? null : state.currentJob,
-    })),
-
-  clearAllJobs: () =>
-    set({
-      jobs: [],
+export const useTranslationStore = create<TranslationStore>()(
+  persist(
+    (set, get) => ({
       currentJob: null,
+      jobs: [],
       isTranslating: false,
+
+      createJob: (jobData) => {
+        const job: TranslationJob = {
+          ...jobData,
+          id: `job-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+          status: 'idle',
+          progress: 0,
+          chunks: [],
+          createdAt: new Date(),
+        };
+
+        set((state) => ({
+          jobs: [job, ...state.jobs],
+          currentJob: job,
+          isTranslating: true,
+        }));
+      },
+
+      updateJob: (id, updates) => {
+        set((state) => ({
+          jobs: state.jobs.map((job) =>
+            job.id === id ? { ...job, ...updates } : job
+          ),
+          currentJob:
+            state.currentJob?.id === id
+              ? { ...state.currentJob, ...updates }
+              : state.currentJob,
+          isTranslating:
+            updates.status === 'completed' || updates.status === 'failed'
+              ? false
+              : state.isTranslating,
+        }));
+      },
+
+      updateChunk: (jobId, chunkId, updates) => {
+        set((state) => ({
+          jobs: state.jobs.map((job) =>
+            job.id === jobId
+              ? {
+                  ...job,
+                  chunks: job.chunks.map((chunk) =>
+                    chunk.id === chunkId ? { ...chunk, ...updates } : chunk
+                  ),
+                }
+              : job
+          ),
+          currentJob:
+            state.currentJob?.id === jobId
+              ? {
+                  ...state.currentJob,
+                  chunks: state.currentJob.chunks.map((chunk) =>
+                    chunk.id === chunkId ? { ...chunk, ...updates } : chunk
+                  ),
+                }
+              : state.currentJob,
+        }));
+      },
+
+      setCurrentJob: (job) => set({ currentJob: job }),
+
+      clearJob: (id) =>
+        set((state) => ({
+          jobs: state.jobs.filter((job) => job.id !== id),
+          currentJob: state.currentJob?.id === id ? null : state.currentJob,
+        })),
+
+      clearAllJobs: () =>
+        set({
+          jobs: [],
+          currentJob: null,
+          isTranslating: false,
+        }),
     }),
-}));
+    {
+      name: 'translation-store',
+      partialize: (state) => ({ jobs: state.jobs }),
+    },
+  ),
+);

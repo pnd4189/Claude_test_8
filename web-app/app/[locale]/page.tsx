@@ -76,7 +76,7 @@ export default function HomePage() {
                   Multiple AI Providers
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Automatic fallback across OpenRouter, Gemini, Mistral, and
+                  Automatic fallback across OpenRouter, Gemini, and
                   Groq
                 </p>
               </div>

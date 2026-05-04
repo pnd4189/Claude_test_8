@@ -1,6 +1,7 @@
 /** Gemini (Google) provider — custom REST format, not OpenAI-compatible */
 
 import { APIKeyRotator } from '../api-key-rotator';
+import { TRANSLATION_SYSTEM_PROMPT } from '../translation-prompt';
 import { loadKeysFromEnv } from './openai-compatible-provider';
 
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
@@ -19,12 +20,15 @@ export class GeminiClient {
     targetLang: string,
     model: string = 'gemini-2.0-flash'
   ): Promise<string> {
-    const systemPrompt = `You are a professional translator. Translate the following text from ${sourceLang} to ${targetLang}. Maintain the original meaning, tone, and formatting. Only return the translated text without any explanations or additional content.`;
+    const systemPrompt = TRANSLATION_SYSTEM_PROMPT(sourceLang, targetLang);
 
     return this.rotator.executeWithRotation(async (apiKey) => {
-      const res = await fetch(`${GEMINI_BASE}/${model}:generateContent?key=${apiKey}`, {
+      const res = await fetch(`${GEMINI_BASE}/${model}:generateContent`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey,
+        },
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: systemPrompt }] },
           contents: [{ parts: [{ text }] }],

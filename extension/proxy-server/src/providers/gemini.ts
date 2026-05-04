@@ -1,11 +1,8 @@
 /** Gemini API translation provider */
 
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+import { buildInlinePrompt } from '../prompt-builder.ts';
 
-function buildPrompt(text: string, from: string, to: string): string {
-  const fromLabel = from === 'auto' ? 'the detected language' : from;
-  return `You are a professional translator. Translate the following text from ${fromLabel} to ${to}. Output only the translation, nothing else.\n\n${text}`;
-}
+const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
 /** Translate text using Gemini API */
 export async function translateWithGemini(
@@ -14,11 +11,14 @@ export async function translateWithGemini(
   to: string,
   apiKey: string
 ): Promise<string> {
-  const res = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
+  const res = await fetch(GEMINI_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'x-goog-api-key': apiKey,
+    },
     body: JSON.stringify({
-      contents: [{ parts: [{ text: buildPrompt(text, from, to) }] }],
+      contents: [{ parts: [{ text: buildInlinePrompt(text, from, to) }] }],
       generationConfig: { temperature: 0.3 },
     }),
   });

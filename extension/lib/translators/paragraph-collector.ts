@@ -65,3 +65,8 @@ export function setTranslationState(el: HTMLElement, state: TranslationState): v
 export function isCollected(el: HTMLElement): boolean {
   return el.hasAttribute(ATTR_ID);
 }
+
+/** Reset the internal ID counter — call when stopping translation on a page */
+export function resetCollector(): void {
+  nextId = 0;
+}

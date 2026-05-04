@@ -5,25 +5,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createOpenRouterClient } from '@/lib/providers/openrouter';
+import { shouldIncludeModel } from '@/lib/model-filters';
 import { modelsCache } from '@/lib/redis';
 
 export const runtime = 'nodejs';
-
-// Free model filters
-const FREE_MODEL_FILTERS = [
-  ':free',
-  'qwen',
-  'deepseek',
-  'kimi',
-  'glm',
-  'phi',
-  'gemma',
-];
-
-function shouldIncludeModel(modelId: string): boolean {
-  const lowerCaseId = modelId.toLowerCase();
-  return FREE_MODEL_FILTERS.some((filter) => lowerCaseId.includes(filter));
-}
 
 export async function GET(request: NextRequest) {
   try {

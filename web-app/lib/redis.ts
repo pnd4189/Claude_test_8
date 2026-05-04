@@ -1,5 +1,11 @@
+import { createHash } from 'crypto';
 import { Redis } from '@upstash/redis';
 import { Ratelimit } from '@upstash/ratelimit';
+import { logger } from './logger';
+import type { AIModel } from './providers/types';
+
+/** Alias for cached model entries — mirrors AIModel */
+export type ModelInfo = AIModel;
 
 // Initialize Redis client (will use env variables)
 export const redis = new Redis({
@@ -22,17 +28,17 @@ export const cache = {
     try {
       return await redis.get<T>(key);
     } catch (error) {
-      console.error('Cache get error:', error);
+      logger.error('cache', 'Cache get error', error);
       return null;
     }
   },
 
   // Set cached value with TTL (default 7 days)
-  async set(key: string, value: any, ttlSeconds = 604800): Promise<void> {
+  async set(key: string, value: unknown, ttlSeconds = 604800): Promise<void> {
     try {
       await redis.set(key, value, { ex: ttlSeconds });
     } catch (error) {
-      console.error('Cache set error:', error);
+      logger.error('cache', 'Cache set error', error);
     }
   },
 
@@ -41,7 +47,7 @@ export const cache = {
     try {
       await redis.del(key);
     } catch (error) {
-      console.error('Cache del error:', error);
+      logger.error('cache', 'Cache del error', error);
     }
   },
 
@@ -51,7 +57,7 @@ export const cache = {
       const result = await redis.exists(key);
       return result === 1;
     } catch (error) {
-      console.error('Cache exists error:', error);
+      logger.error('cache', 'Cache exists error', error);
       return false;
     }
   },
@@ -65,8 +71,7 @@ export const translationCache = {
     targetLang: string,
     provider: string
   ): string {
-    // Create a simple hash from the text (first 100 chars + length)
-    const textHash = text.substring(0, 100) + text.length;
+    const textHash = createHash('sha256').update(text).digest('hex').substring(0, 32);
     return `translation:${sourceLang}:${targetLang}:${provider}:${textHash}`;
   },
 
@@ -94,15 +99,15 @@ export const translationCache = {
 
 // Models cache utilities
 export const modelsCache = {
-  async getModels(provider: string): Promise<any[] | null> {
-    return cache.get<any[]>(`models:${provider}`);
+  async getModels(provider: string): Promise<ModelInfo[] | null> {
+    return cache.get<ModelInfo[]>(`models:${provider}`);
   },
 
-  async setModels(provider: string, models: any[]): Promise<void> {
+  async setModels(provider: string, models: ModelInfo[]): Promise<void> {
     await cache.set(`models:${provider}`, models, 86400); // 24 hours TTL
   },
 
-  async refreshModels(provider: string, models: any[]): Promise<void> {
+  async refreshModels(provider: string, models: ModelInfo[]): Promise<void> {
     await this.setModels(provider, models);
   },
 };

@@ -14,6 +14,15 @@ interface SettingsState extends ExtensionSettings {
   resetSettings: () => Promise<void>;
 }
 
+let writeLock = Promise.resolve();
+
+async function queuedWrite(data: ExtensionSettings | typeof DEFAULT_SETTINGS): Promise<void> {
+  writeLock = writeLock.then(async () => {
+    await chrome.storage.local.set({ settings: data });
+  });
+  await writeLock;
+}
+
 export const useSettingsStore = create<SettingsState>((set, get) => ({
   ...DEFAULT_SETTINGS,
   loaded: false,
@@ -49,7 +58,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     };
     set(updated);
     try {
-      await chrome.storage.local.set({ settings: updated });
+      await queuedWrite(updated);
     } catch {
       // Non-extension context
     }
@@ -58,7 +67,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   async resetSettings() {
     set({ ...DEFAULT_SETTINGS });
     try {
-      await chrome.storage.local.set({ settings: DEFAULT_SETTINGS });
+      await queuedWrite(DEFAULT_SETTINGS);
     } catch {
       // Non-extension context
     }

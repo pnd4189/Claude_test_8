@@ -81,4 +81,4 @@ export interface ProviderError extends Error {
   provider?: string;
 }
 
-export type ProviderName = 'openrouter' | 'gemini' | 'mistral' | 'groq' | 'qwen' | 'glm';
+export type ProviderName = 'openrouter' | 'gemini' | 'groq' | 'qwen' | 'glm';

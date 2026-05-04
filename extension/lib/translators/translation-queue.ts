@@ -73,6 +73,11 @@ export class TranslationQueue {
     const texts = batch.map((item) => item.paragraph.text);
     try {
       const translations = await this.translateBatch(texts);
+      if (translations.length !== batch.length) {
+        throw new Error(
+          `Batch response mismatch: expected ${batch.length} translations, got ${translations.length}`
+        );
+      }
       for (let i = 0; i < batch.length; i++) {
         this.onTranslated(batch[i].paragraph.id, translations[i]);
       }

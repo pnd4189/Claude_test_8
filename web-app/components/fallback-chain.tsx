@@ -6,7 +6,7 @@ export function FallbackChain() {
   const { providers, selectedProvider } = useProviderStore();
 
   // Define fallback order
-  const fallbackOrder = ['openrouter', 'gemini', 'mistral', 'groq'];
+  const fallbackOrder = ['openrouter', 'gemini', 'groq'];
 
   return (
     <div className="space-y-4">

@@ -5,6 +5,7 @@
  */
 
 import { APIKeyRotator } from '../api-key-rotator';
+import { TRANSLATION_SYSTEM_PROMPT } from '../translation-prompt';
 import type {
   ChatCompletionRequest,
   ChatCompletionResponse,
@@ -71,7 +72,7 @@ export class OpenRouterClient {
     targetLang: string,
     model: string = 'openai/gpt-3.5-turbo'
   ): Promise<string> {
-    const systemPrompt = `You are a professional translator. Translate the following text from ${sourceLang} to ${targetLang}. Maintain the original meaning, tone, and formatting. Only return the translated text without any explanations or additional content.`;
+    const systemPrompt = TRANSLATION_SYSTEM_PROMPT(sourceLang, targetLang);
 
     const response = await this.chatCompletion({
       model,

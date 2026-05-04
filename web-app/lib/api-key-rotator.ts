@@ -5,6 +5,8 @@
  * When one key hits quota, automatically rotates to the next available key.
  */
 
+import { logger } from './logger';
+
 export class APIKeyRotator {
   private keys: string[];
   private currentIndex: number = 0;
@@ -20,7 +22,7 @@ export class APIKeyRotator {
       throw new Error(`No API keys provided for ${provider}`);
     }
 
-    console.log(`[${this.provider}] Initialized with ${this.keys.length} keys`);
+    logger.info('api-key-rotator', `Initialized with ${this.keys.length} keys for ${this.provider}`);
   }
 
   /**
@@ -30,7 +32,7 @@ export class APIKeyRotator {
     fn: (apiKey: string) => Promise<T>,
     options: {
       onRotation?: (newIndex: number, totalKeys: number) => void;
-      onError?: (error: any, keyIndex: number) => void;
+      onError?: (error: unknown, keyIndex: number) => void;
     } = {}
   ): Promise<T> {
     const startIndex = this.currentIndex;
@@ -41,25 +43,27 @@ export class APIKeyRotator {
       const keyMasked = this.maskKey(currentKey);
 
       try {
-        console.log(
-          `[${this.provider}] Attempting with key ${this.currentIndex + 1}/${this.keys.length}: ${keyMasked}`
+        logger.info(
+          'api-key-rotator',
+          `Attempting with key ${this.currentIndex + 1}/${this.keys.length}: ${keyMasked}`
         );
 
         const result = await fn(currentKey);
 
         // Success - reset failed attempts for this key
         this.failedAttempts.delete(currentKey);
-        console.log(`[${this.provider}] Success with key ${keyMasked}`);
+        logger.info('api-key-rotator', `Success with key ${keyMasked}`);
 
         return result;
-      } catch (error: any) {
+      } catch (error: unknown) {
         const isQuotaError = this.isQuotaError(error);
         const isRateLimitError = this.isRateLimitError(error);
 
         // Log error
-        console.error(
-          `[${this.provider}] Error with key ${keyMasked}:`,
-          error.message || error
+        logger.error(
+          'api-key-rotator',
+          `Error with key ${keyMasked}`,
+          error instanceof Error ? error.message : String(error)
         );
 
         // Call error callback
@@ -71,8 +75,9 @@ export class APIKeyRotator {
 
         // If quota or rate limit error, rotate to next key
         if (isQuotaError || isRateLimitError) {
-          console.warn(
-            `[${this.provider}] ${isQuotaError ? 'Quota' : 'Rate limit'} exceeded on key ${keyMasked}, rotating...`
+          logger.warn(
+            'api-key-rotator',
+            `${isQuotaError ? 'Quota' : 'Rate limit'} exceeded on key ${keyMasked}, rotating...`
           );
 
           this.rotateKey();
@@ -101,9 +106,10 @@ export class APIKeyRotator {
   /**
    * Check if error is a quota exceeded error
    */
-  private isQuotaError(error: any): boolean {
-    const message = error.message?.toLowerCase() || '';
-    const status = error.status || error.statusCode;
+  private isQuotaError(error: unknown): boolean {
+    const err = error as Record<string, unknown>;
+    const message = (err?.message as string)?.toLowerCase?.() || '';
+    const status = (err?.status as number) || (err?.statusCode as number);
 
     return (
       status === 429 ||
@@ -117,9 +123,10 @@ export class APIKeyRotator {
   /**
    * Check if error is a rate limit error
    */
-  private isRateLimitError(error: any): boolean {
-    const message = error.message?.toLowerCase() || '';
-    const status = error.status || error.statusCode;
+  private isRateLimitError(error: unknown): boolean {
+    const err = error as Record<string, unknown>;
+    const message = (err?.message as string)?.toLowerCase?.() || '';
+    const status = (err?.status as number) || (err?.statusCode as number);
 
     return (
       status === 429 ||
@@ -206,7 +213,6 @@ export function createRotators() {
   const rotators = {
     openrouter: createRotatorFromEnv('OPENROUTER_API_KEY', 'OpenRouter'),
     gemini: createRotatorFromEnv('GEMINI_API_KEY', 'Gemini'),
-    mistral: createRotatorFromEnv('MISTRAL_API_KEY', 'Mistral'),
     groq: createRotatorFromEnv('GROQ_API_KEY', 'Groq'),
   };
 
@@ -237,7 +243,7 @@ function createRotatorFromEnv(
   }
 
   if (keys.length === 0) {
-    console.warn(`No API keys found for ${provider} (${prefix}_X)`);
+    logger.warn('api-key-rotator', `No API keys found for ${provider} (${prefix}_X)`);
     return null;
   }
 

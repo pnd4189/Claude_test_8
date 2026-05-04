@@ -19,6 +19,8 @@ export async function translatePdfPage(
   page: PdfPage,
   onProgress?: (done: number, total: number) => void
 ): Promise<TranslatedPage> {
+  const settings = await chrome.storage.local.get('settings');
+  const targetLang = settings.settings?.targetLang ?? 'vi';
   const blocks = page.textBlocks;
   const results: TranslatedBlock[] = [];
 
@@ -30,7 +32,7 @@ export async function translatePdfPage(
       action: 'batch-translate',
       texts,
       sourceLang: 'auto',
-      targetLang: 'vi',
+      targetLang,
     });
 
     const translations: string[] = response.translations ?? texts;

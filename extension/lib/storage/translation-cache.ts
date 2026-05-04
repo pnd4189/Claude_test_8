@@ -25,16 +25,13 @@ const DB_VERSION = 1;
 const STORE_NAME = 'translations';
 const TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
-/** Generate a simple hash for cache key */
-function hashKey(text: string, sourceLang: string, targetLang: string, provider: string): string {
+/** Generate a SHA-256 hash for cache key */
+async function hashKey(text: string, sourceLang: string, targetLang: string, provider: string): Promise<string> {
   const input = `${sourceLang}:${targetLang}:${provider}:${text}`;
-  let hash = 0;
-  for (let i = 0; i < input.length; i++) {
-    const char = input.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash |= 0; // Convert to 32-bit int
-  }
-  return hash.toString(36);
+  const buffer = new TextEncoder().encode(input);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('').substring(0, 32);
 }
 
 let dbPromise: Promise<IDBPDatabase<TranslationCacheDB>> | null = null;
@@ -59,7 +56,7 @@ export async function getCachedTranslation(
   provider: string
 ): Promise<string | null> {
   const db = await getDB();
-  const key = hashKey(text, sourceLang, targetLang, provider);
+  const key = await hashKey(text, sourceLang, targetLang, provider);
   const entry = await db.get(STORE_NAME, key);
 
   if (!entry) return null;
@@ -82,7 +79,7 @@ export async function setCachedTranslation(
   provider: string
 ): Promise<void> {
   const db = await getDB();
-  const key = hashKey(text, sourceLang, targetLang, provider);
+  const key = await hashKey(text, sourceLang, targetLang, provider);
 
   await db.put(STORE_NAME, {
     hash: key,

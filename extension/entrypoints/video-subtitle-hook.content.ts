@@ -40,7 +40,8 @@ export default defineContentScript({
     }
 
     // Listen for toggle from popup
-    chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      if (sender.id !== chrome.runtime.id) return;
       if (message.action === 'toggle-subtitles') {
         if (message.enabled && !subtitleEnabled) {
           setupSubtitles().then(() => sendResponse({ ok: true }));

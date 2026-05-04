@@ -4,7 +4,6 @@ import { useTranslations } from 'next-intl';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { ProviderSelector } from '@/components/provider-selector';
-import { QuotaDisplay } from '@/components/quota-display';
 import { FallbackChain } from '@/components/fallback-chain';
 import { ThemeProvider } from '@/components/theme-provider';
 import Link from 'next/link';
@@ -74,11 +73,6 @@ export default function SettingsPage() {
               </h2>
 
               <ProviderSelector />
-            </section>
-
-            {/* Quota Usage */}
-            <section className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-              <QuotaDisplay />
             </section>
 
             {/* Fallback Chain */}

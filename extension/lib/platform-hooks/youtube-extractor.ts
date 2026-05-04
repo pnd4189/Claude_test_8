@@ -2,6 +2,20 @@
 
 import type { SubtitleEntry } from '../parsers/subtitle-parser.ts';
 
+/** Validate that a caption URL belongs to a known YouTube/Google domain to prevent SSRF */
+function isAllowedCaptionUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:' && (
+      parsed.hostname === 'www.youtube.com' ||
+      parsed.hostname.endsWith('.google.com') ||
+      parsed.hostname === 'youtube.googleapis.com'
+    );
+  } catch {
+    return false;
+  }
+}
+
 interface CaptionTrack {
   baseUrl: string;
   languageCode: string;
@@ -19,8 +33,9 @@ export async function extractYouTubeSubtitles(videoId: string): Promise<Subtitle
   const manual = tracks.find((t) => !t.kind || t.kind !== 'asr');
   const track = manual ?? tracks[0];
 
-  // Fetch XML captions
+  // Fetch XML captions (SSRF-safe: validate URL before fetching)
   const url = `${track.baseUrl}&fmt=json3`;
+  if (!isAllowedCaptionUrl(url)) return [];
   const res = await fetch(url);
   if (!res.ok) return [];
 

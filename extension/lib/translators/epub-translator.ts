@@ -14,6 +14,8 @@ export async function translateChapter(
   chapter: EpubChapter,
   onProgress?: (done: number, total: number) => void
 ): Promise<TranslatedChapter> {
+  const settings = await chrome.storage.local.get('settings');
+  const targetLang = settings.settings?.targetLang ?? 'vi';
   const results: Array<{ original: string; translated: string }> = [];
   const { paragraphs } = chapter;
 
@@ -24,7 +26,7 @@ export async function translateChapter(
       action: 'batch-translate',
       texts: batch,
       sourceLang: 'auto',
-      targetLang: 'vi',
+      targetLang,
     });
 
     const translations: string[] = response.translations ?? batch;

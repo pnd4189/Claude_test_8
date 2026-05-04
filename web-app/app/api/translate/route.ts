@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getProvider } from '@/lib/providers/provider-factory';
 import { translationCache, ratelimit } from '@/lib/redis';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300; // 5 minutes for large translations
@@ -73,7 +74,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (cached) {
-      console.log('Cache hit for translation');
+      logger.info('translate', 'Cache hit for translation');
       return NextResponse.json({
         translatedText: cached,
         provider,
@@ -86,7 +87,7 @@ export async function POST(request: NextRequest) {
     const client = getProvider(provider);
     if (!client) {
       return NextResponse.json(
-        { error: `Provider "${provider}" not configured. Check API keys.` },
+        { error: `Provider "${provider}" not configured.` },
         { status: 400 }
       );
     }
@@ -108,14 +109,11 @@ export async function POST(request: NextRequest) {
       model,
       cached: false,
     });
-  } catch (error: any) {
-    console.error('Translation error:', error);
+  } catch (error: unknown) {
+    logger.error('translate', 'Translation error', error);
 
-    // Check if it's a quota error
-    if (
-      error.message?.includes('quota') ||
-      error.message?.includes('exhausted')
-    ) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    if (errMsg.includes('quota') || errMsg.includes('exhausted')) {
       return NextResponse.json(
         {
           error: 'All API quotas exhausted. Please try again later.',
@@ -127,7 +125,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       {
-        error: error.message || 'Translation failed',
+        error: 'Translation failed. Please try again.',
         code: 'TRANSLATION_ERROR',
       },
       { status: 500 }

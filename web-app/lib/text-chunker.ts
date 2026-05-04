@@ -26,8 +26,25 @@ const DEFAULT_OPTIONS: Required<ChunkOptions> = {
 };
 
 export class TextChunker {
-  // Rough approximation: 1 token ≈ 4 characters (0.25 tokens per char)
-  private readonly CHARS_PER_TOKEN = 4;
+  private readonly CHARS_PER_TOKEN_LATIN = 4;
+  private readonly CHARS_PER_TOKEN_CJK = 1.5;
+
+  private hasCJK(text: string): boolean {
+    const cjkRange = /[一-鿿㐀-䶿\u{20000}-\u{2a6df}\u{2a700}-\u{2b73f}\u{2b740}-\u{2b81f}\u{2b820}-\u{2ceaf}\u{2ceb0}-\u{2ebef}\u{30000}-\u{3134f}　-〿぀-ゟ゠-ヿ가-힯]/u;
+    return cjkRange.test(text);
+  }
+
+  private getCharsPerToken(text: string): number {
+    return this.hasCJK(text) ? this.CHARS_PER_TOKEN_CJK : this.CHARS_PER_TOKEN_LATIN;
+  }
+
+  private safeSlice(text: string, start: number, end: number): string {
+    return Array.from(text).slice(start, end).join('');
+  }
+
+  private safeLength(text: string): number {
+    return Array.from(text).length;
+  }
 
   /**
    * Split text into chunks
@@ -39,11 +56,12 @@ export class TextChunker {
       return [];
     }
 
-    const maxChars = opts.maxTokens * this.CHARS_PER_TOKEN;
-    const overlapChars = opts.overlap * this.CHARS_PER_TOKEN;
+    const charsPerToken = this.getCharsPerToken(text);
+    const maxChars = opts.maxTokens * charsPerToken;
+    const overlapChars = opts.overlap * charsPerToken;
 
     // If text is small enough, return as single chunk
-    if (text.length <= maxChars) {
+    if (this.safeLength(text) <= maxChars) {
       return [
         {
           id: this.generateChunkId(0),
@@ -88,7 +106,7 @@ export class TextChunker {
       const sentence = sentences[i];
 
       // If adding this sentence would exceed max, save current chunk
-      if (currentChunk.length + sentence.length > maxChars && currentChunk) {
+      if (this.safeLength(currentChunk) + this.safeLength(sentence) > maxChars && currentChunk) {
         chunks.push(currentChunk.trim());
         previousChunk = currentChunk;
 
@@ -116,30 +134,29 @@ export class TextChunker {
     maxChars: number,
     overlapChars: number
   ): string[] {
+    const chars = Array.from(text);
+    const textLen = chars.length;
     const chunks: string[] = [];
     let position = 0;
 
-    while (position < text.length) {
-      const end = Math.min(position + maxChars, text.length);
-      let chunkText = text.slice(position, end);
+    while (position < textLen) {
+      const end = Math.min(position + maxChars, textLen);
+      let chunkText = chars.slice(position, end).join('');
 
-      // Try to end at word boundary if not at text end
-      if (end < text.length) {
+      if (end < textLen) {
         const lastSpace = chunkText.lastIndexOf(' ');
         if (lastSpace > maxChars * 0.8) {
-          // Only adjust if we're not losing too much
           chunkText = chunkText.slice(0, lastSpace);
         }
       }
 
       chunks.push(chunkText.trim());
 
-      // Move position forward, accounting for overlap
-      position = end - overlapChars;
+      const endPosition = position + (chunkText.trimEnd().length || 1);
+      position = endPosition - overlapChars;
 
-      // Ensure we make progress
-      if (position <= chunks[chunks.length - 1].length + (chunks.length - 1) * (maxChars - overlapChars)) {
-        position = end;
+      if (position <= (chunks.length > 1 ? chunks[chunks.length - 2].length : 0)) {
+        position = endPosition;
       }
     }
 
@@ -150,19 +167,17 @@ export class TextChunker {
    * Split text into sentences
    */
   private splitIntoSentences(text: string): string[] {
-    // Split on sentence boundaries: ., !, ?, or newlines
-    // But preserve the punctuation
+    const chars = Array.from(text);
     const sentences: string[] = [];
     let current = '';
 
-    for (let i = 0; i < text.length; i++) {
-      const char = text[i];
+    for (let i = 0; i < chars.length; i++) {
+      const char = chars[i];
       current += char;
 
-      // Check if this is sentence end
       if (
         (char === '.' || char === '!' || char === '?') &&
-        (i === text.length - 1 || text[i + 1] === ' ' || text[i + 1] === '\n')
+        (i === chars.length - 1 || chars[i + 1] === ' ' || chars[i + 1] === '\n')
       ) {
         sentences.push(current);
         current = '';
@@ -172,7 +187,6 @@ export class TextChunker {
       }
     }
 
-    // Add any remaining text
     if (current.trim()) {
       sentences.push(current);
     }
@@ -184,12 +198,12 @@ export class TextChunker {
    * Get overlap text from end of previous chunk
    */
   private getOverlap(text: string, overlapChars: number): string {
-    if (text.length <= overlapChars) {
+    const charLen = this.safeLength(text);
+    if (charLen <= overlapChars) {
       return text + ' ';
     }
 
-    // Get last overlapChars, but try to start at word boundary
-    const overlap = text.slice(-overlapChars);
+    const overlap = this.safeSlice(text, charLen - overlapChars, charLen);
     const firstSpace = overlap.indexOf(' ');
 
     if (firstSpace > 0 && firstSpace < overlapChars * 0.3) {
@@ -203,8 +217,7 @@ export class TextChunker {
    * Estimate number of tokens in text
    */
   estimateTokens(text: string): number {
-    // Rough estimate: 1 token ≈ 4 characters
-    return Math.ceil(text.length / this.CHARS_PER_TOKEN);
+    return Math.ceil(this.safeLength(text) / this.getCharsPerToken(text));
   }
 
   /**

@@ -16,6 +16,8 @@ export async function translateSubtitles(
   entries: SubtitleEntry[],
   onProgress?: (done: number, total: number) => void
 ): Promise<TranslatedSubtitle[]> {
+  const settings = await chrome.storage.local.get('settings');
+  const targetLang = settings.settings?.targetLang ?? 'vi';
   const results: TranslatedSubtitle[] = [];
 
   for (let i = 0; i < entries.length; i += BATCH_SIZE) {
@@ -26,7 +28,7 @@ export async function translateSubtitles(
       action: 'batch-translate',
       texts,
       sourceLang: 'auto',
-      targetLang: 'vi',
+      targetLang,
     });
 
     const translations: string[] = response.translations ?? texts;

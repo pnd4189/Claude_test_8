@@ -7,16 +7,23 @@ import { translateWithGlm } from './providers/glm.ts';
 import { translateWithQwen } from './providers/qwen.ts';
 import { translateWithGroq } from './providers/groq.ts';
 
+type ProxyProvider = 'qwen' | 'gemini' | 'glm' | 'groq';
+
+const ALLOWED_LANGS = new Set(['en','vi','zh','ja','ko','fr','de','es','pt','ru','th','auto']);
+const VALID_PROVIDERS = new Set<ProxyProvider>(['qwen','gemini','glm','groq']);
+const ALLOWED_ORIGINS = [
+  /^https:\/\/[a-z0-9-]+\.chromiumapp\.org$/,
+  /^chrome-extension:\/\/[a-z0-9-]+$/,
+];
+
 interface Env {
   TRANSLATION_CACHE: KVNamespace;
   GEMINI_API_KEY: string;
   GLM_API_KEY: string;
-  QWEN_API_KEY?: string;    // Primary provider
-  GROQ_API_KEY?: string;    // Optional speed provider
-  EXTENSION_SECRET?: string;
+  QWEN_API_KEY?: string;
+  GROQ_API_KEY?: string;
+  EXTENSION_SECRET: string;
 }
-
-type ProxyProvider = 'qwen' | 'gemini' | 'glm' | 'groq';
 
 interface TranslateBody {
   text: string;
@@ -32,65 +39,79 @@ interface BatchTranslateBody {
   provider?: ProxyProvider;
 }
 
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, X-Extension-Key',
-};
+function getCorsHeaders(request: Request): Record<string, string> {
+  const origin = request.headers.get('Origin') ?? '';
+  const allowed = ALLOWED_ORIGINS.some((pat) => pat.test(origin));
+  return {
+    'Access-Control-Allow-Origin': allowed ? origin : '',
+    'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, X-Extension-Key',
+    Vary: 'Origin',
+  };
+}
 
-function json(data: unknown, status = 200): Response {
+function json(data: unknown, status: number, corsHeaders: Record<string, string>): Response {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+    headers: { 'Content-Type': 'application/json', ...corsHeaders },
   });
 }
 
-function errorResponse(message: string, status: number): Response {
-  return json({ error: message }, status);
+function errorResponse(message: string, status: number, corsHeaders: Record<string, string>): Response {
+  return json({ error: message }, status, corsHeaders);
+}
+
+function validateLang(code: string): boolean {
+  return ALLOWED_LANGS.has(code);
+}
+
+function validateProvider(p: string | undefined): p is ProxyProvider {
+  return p == null || VALID_PROVIDERS.has(p as ProxyProvider);
 }
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    // CORS preflight
+    const corsHeaders = getCorsHeaders(request);
+
     if (request.method === 'OPTIONS') {
-      return new Response(null, { status: 204, headers: CORS_HEADERS });
+      return new Response(null, { status: 204, headers: corsHeaders });
     }
 
     const url = new URL(request.url);
     const ip = request.headers.get('CF-Connecting-IP') ?? 'unknown';
 
-    // Auth check
-    if (env.EXTENSION_SECRET) {
-      const key = request.headers.get('X-Extension-Key');
-      if (key !== env.EXTENSION_SECRET) {
-        return errorResponse('Unauthorized', 401);
-      }
+    if (!env.EXTENSION_SECRET) {
+      console.error('EXTENSION_SECRET is not configured');
+      return errorResponse('Server misconfiguration', 500, corsHeaders);
     }
 
-    // Rate limit
+    const key = request.headers.get('X-Extension-Key');
+    if (key !== env.EXTENSION_SECRET) {
+      return errorResponse('Unauthorized', 401, corsHeaders);
+    }
+
     const retryAfter = checkRateLimit(ip);
     if (retryAfter > 0) {
       return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
         status: 429,
-        headers: { ...CORS_HEADERS, 'Retry-After': String(retryAfter), 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Retry-After': String(retryAfter), 'Content-Type': 'application/json' },
       });
     }
 
-    // Routing
     try {
       if (url.pathname === '/api/translate' && request.method === 'POST') {
-        return await handleTranslate(request, env);
+        return await handleTranslate(request, env, corsHeaders);
       }
       if (url.pathname === '/api/translate/batch' && request.method === 'POST') {
-        return await handleBatchTranslate(request, env);
+        return await handleBatchTranslate(request, env, corsHeaders);
       }
       if (url.pathname === '/api/providers' && request.method === 'GET') {
-        return handleProviders(env);
+        return handleProviders(env, corsHeaders);
       }
-      return errorResponse('Not found', 404);
+      return errorResponse('Not found', 404, corsHeaders);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Internal error';
-      return errorResponse(message, 500);
+      console.error('Unhandled proxy error:', err);
+      return errorResponse('Internal server error', 500, corsHeaders);
     }
   },
 } satisfies ExportedHandler<Env>;
@@ -151,41 +172,79 @@ async function translateText(
   throw lastError ?? new Error('All providers failed');
 }
 
-async function handleTranslate(request: Request, env: Env): Promise<Response> {
-  const body = await request.json() as TranslateBody;
-  if (!body.text || !body.from || !body.to) {
-    return errorResponse('Missing required fields: text, from, to', 400);
+async function parseBody<T>(request: Request, corsHeaders: Record<string, string>): Promise<T | null> {
+  try {
+    return await request.json() as T;
+  } catch {
+    return null;
   }
-
-  // Default to Qwen if available, else Gemini
-  const defaultProvider: ProxyProvider = env.QWEN_API_KEY ? 'qwen' : 'gemini';
-  const { translated, usedProvider } = await translateText(
-    body.text, body.from, body.to, body.provider ?? defaultProvider, env
-  );
-  return json({ translatedText: translated, provider: usedProvider });
 }
 
-async function handleBatchTranslate(request: Request, env: Env): Promise<Response> {
-  const body = await request.json() as BatchTranslateBody;
+async function handleTranslate(request: Request, env: Env, corsHeaders: Record<string, string>): Promise<Response> {
+  const body = await parseBody<TranslateBody>(request, corsHeaders);
+  if (!body) return errorResponse('Invalid JSON body', 400, corsHeaders);
+  if (!body.text || !body.from || !body.to) {
+    return errorResponse('Missing required fields: text, from, to', 400, corsHeaders);
+  }
+  if (!validateLang(body.from) || !validateLang(body.to)) {
+    return errorResponse('Unsupported language code', 400, corsHeaders);
+  }
+  if (body.text.length > 50000) {
+    return errorResponse('Text too long (max 50,000 characters)', 400, corsHeaders);
+  }
+  if (!validateProvider(body.provider)) {
+    return errorResponse('Invalid provider', 400, corsHeaders);
+  }
+
+  const defaultProvider: ProxyProvider = env.QWEN_API_KEY ? 'qwen' : 'gemini';
+  try {
+    const { translated, usedProvider } = await translateText(
+      body.text, body.from, body.to, body.provider ?? defaultProvider, env
+    );
+    return json({ translatedText: translated, provider: usedProvider }, 200, corsHeaders);
+  } catch (err) {
+    console.error('Translation error:', err);
+    return errorResponse('Translation failed', 500, corsHeaders);
+  }
+}
+
+async function handleBatchTranslate(request: Request, env: Env, corsHeaders: Record<string, string>): Promise<Response> {
+  const body = await parseBody<BatchTranslateBody>(request, corsHeaders);
+  if (!body) return errorResponse('Invalid JSON body', 400, corsHeaders);
   if (!body.texts?.length || !body.from || !body.to) {
-    return errorResponse('Missing required fields: texts, from, to', 400);
+    return errorResponse('Missing required fields: texts, from, to', 400, corsHeaders);
+  }
+  if (!validateLang(body.from) || !validateLang(body.to)) {
+    return errorResponse('Unsupported language code', 400, corsHeaders);
   }
   if (body.texts.length > 50) {
-    return errorResponse('Maximum 50 texts per batch', 400);
+    return errorResponse('Maximum 50 texts per batch', 400, corsHeaders);
+  }
+  for (const t of body.texts) {
+    if (t.length > 10000) {
+      return errorResponse('Each text in batch must be under 10,000 characters', 400, corsHeaders);
+    }
+  }
+  if (!validateProvider(body.provider)) {
+    return errorResponse('Invalid provider', 400, corsHeaders);
   }
 
   const defaultProvider: ProxyProvider = env.QWEN_API_KEY ? 'qwen' : 'gemini';
   const provider = body.provider ?? defaultProvider;
-  const results = await Promise.all(
-    body.texts.map((text) =>
-      translateText(text, body.from, body.to, provider, env).then((r) => r.translated)
-    )
-  );
-
-  return json({ translations: results, provider });
+  try {
+    const results = await Promise.all(
+      body.texts.map((text) =>
+        translateText(text, body.from, body.to, provider, env).then((r) => r.translated)
+      )
+    );
+    return json({ translations: results, provider }, 200, corsHeaders);
+  } catch (err) {
+    console.error('Batch translation error:', err);
+    return errorResponse('Translation failed', 500, corsHeaders);
+  }
 }
 
-function handleProviders(env: Env): Response {
+function handleProviders(env: Env, corsHeaders: Record<string, string>): Response {
   return json({
     providers: [
       { id: 'qwen',   name: 'Qwen (Alibaba)',  available: !!env.QWEN_API_KEY },
@@ -193,5 +252,5 @@ function handleProviders(env: Env): Response {
       { id: 'glm',    name: 'GLM (ChatGLM)',    available: !!env.GLM_API_KEY },
       { id: 'groq',   name: 'Groq',             available: !!env.GROQ_API_KEY },
     ],
-  });
+  }, 200, corsHeaders);
 }

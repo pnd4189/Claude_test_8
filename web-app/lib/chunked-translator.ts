@@ -145,12 +145,16 @@ export class ChunkedTranslator {
   }
 
   /**
-   * Merge translated chunks into final text
+   * Merge translated chunks into final text, inserting placeholders for failures
    */
   private mergeTranslatedChunks(chunks: TranslationChunk[]): string {
     return chunks
-      .filter((chunk) => chunk.status === 'completed' && chunk.targetText)
-      .map((chunk) => chunk.targetText)
+      .map((chunk, index) => {
+        if (chunk.status === 'completed' && chunk.targetText) {
+          return chunk.targetText;
+        }
+        return `[TRANSLATION FAILED - Section ${index + 1}]`;
+      })
       .join('\n\n');
   }
 

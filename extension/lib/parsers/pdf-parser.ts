@@ -1,6 +1,7 @@
 /** PDF parser — lazy-loads PDF.js, extracts text blocks with positioning */
 
 import type { TextItem } from 'pdfjs-dist/types/src/display/api';
+import type { PDFDocumentProxy } from 'pdfjs-dist';
 
 export interface TextBlock {
   text: string;
@@ -33,13 +34,34 @@ async function loadPdfJs() {
   return pdfjsLib;
 }
 
+/** Module-level PDF document cache keyed by ArrayBuffer byte length */
+const docCache = new Map<number, PDFDocumentProxy>();
+
+async function getOrLoadDoc(data: ArrayBuffer): Promise<PDFDocumentProxy> {
+  const key = data.byteLength;
+  const cached = docCache.get(key);
+  if (cached) return cached;
+
+  const pdfjsLib = await loadPdfJs();
+  const doc = await pdfjsLib.getDocument({ data }).promise;
+  docCache.set(key, doc);
+  return doc;
+}
+
+/** Invalidate cached PDF document (call when loading a new file) */
+export function invalidatePdfCache(): void {
+  for (const doc of docCache.values()) {
+    doc.destroy().catch(() => {});
+  }
+  docCache.clear();
+}
+
 /** Parse PDF and extract text from all pages */
 export async function parsePdf(
   data: ArrayBuffer,
   onProgress?: (page: number, total: number) => void
 ): Promise<ParsedPdf> {
-  const pdfjsLib = await loadPdfJs();
-  const doc = await pdfjsLib.getDocument({ data }).promise;
+  const doc = await getOrLoadDoc(data);
   const pages: PdfPage[] = [];
 
   for (let i = 1; i <= doc.numPages; i++) {
@@ -70,8 +92,7 @@ export async function renderPdfPage(
   canvas: HTMLCanvasElement,
   scale = 1.5
 ): Promise<void> {
-  const pdfjsLib = await loadPdfJs();
-  const doc = await pdfjsLib.getDocument({ data }).promise;
+  const doc = await getOrLoadDoc(data);
   const page = await doc.getPage(pageNum);
   const viewport = page.getViewport({ scale });
 

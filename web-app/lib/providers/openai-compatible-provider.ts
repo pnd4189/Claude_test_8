@@ -1,6 +1,7 @@
 /** Base class for OpenAI-compatible translation providers (Qwen, Groq, GLM) */
 
 import { APIKeyRotator } from '../api-key-rotator';
+import { TRANSLATION_SYSTEM_PROMPT } from '../translation-prompt';
 import type { ChatCompletionResponse } from './types';
 
 interface ProviderConfig {
@@ -29,7 +30,7 @@ export class OpenAICompatibleProvider {
     targetLang: string,
     model?: string
   ): Promise<string> {
-    const systemPrompt = `You are a professional translator. Translate the following text from ${sourceLang} to ${targetLang}. Maintain the original meaning, tone, and formatting. Only return the translated text without any explanations or additional content.`;
+    const systemPrompt = TRANSLATION_SYSTEM_PROMPT(sourceLang, targetLang);
 
     return this.rotator.executeWithRotation(async (apiKey) => {
       const res = await fetch(`${this.baseUrl}/chat/completions`, {

@@ -55,7 +55,12 @@ export async function exportTranslatedEpub(options: EpubExportOptions): Promise<
     if (!html) { chapterIndex++; continue; }
 
     // Check if this chapter has paragraphs (same filter as parser)
-    const doc = parser.parseFromString(html, 'text/html');
+    const isLikelyXhtml = html.trimStart().startsWith('<?xml') || html.includes('xmlns');
+    let doc = parser.parseFromString(html, 'application/xhtml+xml');
+    const xhtmlParseFailed = !!doc.querySelector('parsererror');
+    if (xhtmlParseFailed || !isLikelyXhtml) {
+      doc = parser.parseFromString(html, 'text/html');
+    }
     const elements = doc.querySelectorAll(PARAGRAPH_SELECTOR);
     const hasContent = Array.from(elements).some((el) => (el.textContent?.trim().length ?? 0) > MIN_TEXT_LENGTH);
     if (!hasContent) { chapterIndex++; continue; }
@@ -86,7 +91,29 @@ export async function exportTranslatedEpub(options: EpubExportOptions): Promise<
 
     // Serialize back and write to zip
     const serializer = new XMLSerializer();
-    const modifiedHtml = serializer.serializeToString(doc);
+    let modifiedHtml: string;
+    if (!xhtmlParseFailed && isLikelyXhtml) {
+      // XHTML document: XMLSerializer produces valid XHTML
+      modifiedHtml = serializer.serializeToString(doc);
+    } else {
+      // HTML-parsed document: serialize only the body content
+      const body = doc.body;
+      const xhtmlDoc = parser.parseFromString(
+        '<html xmlns="http://www.w3.org/1999/xhtml"><head></head><body></body></html>',
+        'application/xhtml+xml'
+      );
+      const xhtmlBody = xhtmlDoc.querySelector('body');
+      if (xhtmlBody) {
+        // Move modified nodes into the XHTML skeleton
+        while (body.firstChild) {
+          xhtmlBody.appendChild(xhtmlDoc.importNode(body.firstChild, true));
+          body.removeChild(body.firstChild);
+        }
+        modifiedHtml = serializer.serializeToString(xhtmlDoc);
+      } else {
+        modifiedHtml = serializer.serializeToString(doc);
+      }
+    }
     zip.file(filePath, modifiedHtml);
 
     chapterIndex++;
